@@ -108,6 +108,7 @@ async function aggregateFiles(outputFile: string): Promise<void> {
 
     let output = '';
     let includedCount = 0;
+    let ignoredCount = 0;
 
     for (const file of files) {
       if (!ig.ignores(file)) {
@@ -120,15 +121,15 @@ async function aggregateFiles(outputFile: string): Promise<void> {
         output += '\n\`\`\`\n\n';
 
         includedCount++;
-        console.log(`Including: ${file}`);
       } else {
-        console.log(`Ignoring: ${file}`);
+        ignoredCount++;
       }
     }
 
     await fs.writeFile(outputFile, output);
     console.log(`Files aggregated successfully into ${outputFile}`);
     console.log(`Included ${includedCount} files out of ${files.length} total files.`);
+    console.log(`Ignored ${ignoredCount} files.`);
   } catch (error) {
     console.error('Error aggregating files:', error);
     process.exit(1);
