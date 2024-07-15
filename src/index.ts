@@ -6,6 +6,67 @@ import path from 'path';
 import { glob } from 'glob';
 import ignore from 'ignore';
 
+const DEFAULT_IGNORES = [
+  // Node.js
+  'node_modules',
+  'package-lock.json',
+  'npm-debug.log',
+  // Yarn
+  'yarn.lock',
+  'yarn-error.log',
+  // pnpm
+  'pnpm-lock.yaml',
+  // Bun
+  'bun.lockb',
+  // Deno
+  'deno.lock',
+  // PHP (Composer)
+  'vendor',
+  'composer.lock',
+  // Python
+  '__pycache__',
+  '*.pyc',
+  '*.pyo',
+  '*.pyd',
+  '.Python',
+  'pip-log.txt',
+  'pip-delete-this-directory.txt',
+  '.venv',
+  'venv',
+  'ENV',
+  'env',
+  // Ruby
+  'Gemfile.lock',
+  '.bundle',
+  // Java
+  'target',
+  '*.class',
+  // Gradle
+  '.gradle',
+  'build',
+  // Maven
+  'pom.xml.tag',
+  'pom.xml.releaseBackup',
+  'pom.xml.versionsBackup',
+  'pom.xml.next',
+  // .NET
+  'bin',
+  'obj',
+  '*.suo',
+  '*.user',
+  // Go
+  'go.sum',
+  // Rust
+  'Cargo.lock',
+  'target',
+  // General
+  '.git',
+  '.svn',
+  '.hg',
+  '.DS_Store',
+  'Thumbs.db'
+];
+
 async function readIgnoreFile(): Promise<string[]> {
   try {
     const content = await fs.readFile('.aggignore', 'utf-8');
@@ -20,11 +81,12 @@ async function readIgnoreFile(): Promise<string[]> {
 
 async function aggregateFiles(outputFile: string): Promise<void> {
   try {
-    const ignorePatterns = await readIgnoreFile();
-    const ig = ignore().add(ignorePatterns);
+    const userIgnorePatterns = await readIgnoreFile();
+    const allIgnorePatterns = [...DEFAULT_IGNORES, ...userIgnorePatterns];
+    const ig = ignore().add(allIgnorePatterns);
 
     const files = await glob('**/*', {
-      ignore: ignorePatterns,
+      ignore: allIgnorePatterns,
       nodir: true,
       dot: true,
     });
