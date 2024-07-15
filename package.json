@@ -6,6 +6,9 @@
   "bin": {
     "ai-digest": "./dist/index.js"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
