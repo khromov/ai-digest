@@ -4,7 +4,7 @@ import { program } from 'commander';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { glob } from 'glob';
-import ignore from 'ignore';
+import ignore, { Ignore } from 'ignore';
 
 const DEFAULT_IGNORES = [
   // Node.js
@@ -67,31 +67,47 @@ const DEFAULT_IGNORES = [
   'Thumbs.db'
 ];
 
-async function readIgnoreFile(): Promise<string[]> {
+async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]> {
   try {
-    const content = await fs.readFile('.aggignore', 'utf-8');
+    const content = await fs.readFile(filename, 'utf-8');
+    console.log(`Found ${filename} file.`);
     return content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#'));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.log(`No ${filename} file found. Using default ignores.`);
       return [];
     }
     throw error;
   }
 }
 
+function createIgnoreFilter(ignorePatterns: string[]): Ignore {
+  const ig = ignore().add(DEFAULT_IGNORES);
+  if (ignorePatterns.length > 0) {
+    console.log('Additional ignore patterns:');
+    ignorePatterns.forEach(pattern => {
+      console.log(`  - ${pattern}`);
+      ig.add(pattern);
+    });
+  }
+  return ig;
+}
+
 async function aggregateFiles(outputFile: string): Promise<void> {
   try {
     const userIgnorePatterns = await readIgnoreFile();
-    const allIgnorePatterns = [...DEFAULT_IGNORES, ...userIgnorePatterns];
-    const ig = ignore().add(allIgnorePatterns);
+    const ig = createIgnoreFilter(userIgnorePatterns);
 
     const files = await glob('**/*', {
-      ignore: allIgnorePatterns,
+      ignore: [...DEFAULT_IGNORES, ...userIgnorePatterns],
       nodir: true,
       dot: true,
     });
 
+    console.log(`Found ${files.length} files. Applying filters...`);
+
     let output = '';
+    let includedCount = 0;
 
     for (const file of files) {
       if (!ig.ignores(file)) {
@@ -102,11 +118,17 @@ async function aggregateFiles(outputFile: string): Promise<void> {
         output += `\`\`\`${extension}\n`;
         output += content;
         output += '\n\`\`\`\n\n';
+
+        includedCount++;
+        console.log(`Including: ${file}`);
+      } else {
+        console.log(`Ignoring: ${file}`);
       }
     }
 
     await fs.writeFile(outputFile, output);
     console.log(`Files aggregated successfully into ${outputFile}`);
+    console.log(`Included ${includedCount} files out of ${files.length} total files.`);
   } catch (error) {
     console.error('Error aggregating files:', error);
     process.exit(1);
