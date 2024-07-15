@@ -15,7 +15,7 @@ import {
   formatLog
 } from './utils';
 
-async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]> {
+async function readIgnoreFile(filename: string = '.aidigestignore'): Promise<string[]> {
   try {
     const content = await fs.readFile(filename, 'utf-8');
     console.log(formatLog(`Found ${filename} file.`, '📄'));
@@ -87,7 +87,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     await fs.writeFile(outputFile, output, { flag: 'w' });
     
     const stats = await fs.stat(outputFile);
-    console.log(formatLog(`Output file size: ${stats.size} bytes`, '📊'));
+    // console.log(formatLog(`Output file size: ${stats.size} bytes`, '📊'));
     
     if (stats.size !== Buffer.byteLength(output)) {
       throw new Error('File size mismatch after writing');
@@ -102,7 +102,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
       console.log(formatLog(`Files ignored by default patterns: ${defaultIgnoredCount}`, '🚫'));
     }
     if (customIgnoredCount > 0) {
-      console.log(formatLog(`Files ignored by .aggignore: ${customIgnoredCount}`, '🚫'));
+      console.log(formatLog(`Files ignored by .aidigestignore: ${customIgnoredCount}`, '🚫'));
     }
     console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
     console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));

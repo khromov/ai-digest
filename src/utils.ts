@@ -95,7 +95,7 @@ export function escapeTripleBackticks(content: string): string {
 export function createIgnoreFilter(ignorePatterns: string[]): Ignore {
   const ig = require('ignore')().add(ignorePatterns);
   if (ignorePatterns.length > 0) {
-    console.log('Ignore patterns from .aggignore:');
+    console.log('Ignore patterns from .aidigestignore:');
     ignorePatterns.forEach(pattern => {
       console.log(`  - ${pattern}`);
     });

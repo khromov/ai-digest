@@ -6,7 +6,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 - Aggregates all files in the current directory and subdirectories
 - Ignores common build artifacts and configuration files
-- Supports custom ignore patterns via `.aggignore`
+- Supports custom ignore patterns via `.aidigestignore`
 - Outputs a single Markdown file with syntax highlighting
 - Optional whitespace removal to reduce token count
 
@@ -53,8 +53,12 @@ This creates a `project_summary.md` file containing your entire codebase with wh
 
 ## Custom Ignore Patterns
 
-ai-digest supports custom ignore patterns using a `.aggignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
+ai-digest supports custom ignore patterns using a `.aidigestignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
 
 ## Whitespace Removal
 
 By default, ai-digest removes excess whitespace from files to reduce the token count when used with AI models. This feature is disabled for whitespace-dependent languages like Python and YAML. Use `--no-whitespace-removal` to keep all whitespace intact.
+
+## Local dev
+
+Run `npm run start` to run the CLI tool on the local project. (Very meta!)
