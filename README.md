@@ -8,7 +8,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 - Ignores common build artifacts and configuration files
 - Supports custom ignore patterns via `.aggignore`
 - Outputs a single Markdown file with syntax highlighting
-- Optionally removes whitespace to reduce token count
+- Optional whitespace removal to reduce token count
 
 ## Installation
 
@@ -22,18 +22,24 @@ npm install -g code-koala
 code-koala
 ```
 
+This will generate a `codebase.md` file with your codebase.
+
 Options:
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
-- `--no-whitespace-removal`: Disable whitespace removal (enabled by default)
+- `--whitespace-removal`: Enable whitespace removal
 
 ## Example
 
 ```bash
-code-koala -o project_summary.md
+code-koala -o project_summary.md --whitespace-removal
 ```
 
-This creates a `project_summary.md` file containing your entire codebase, ready for AI analysis.
+This creates a `project_summary.md` file containing your entire codebase with whitespace removed, ready for AI analysis.
+
+## Custom Ignore Patterns
+
+code-koala supports custom ignore patterns using a `.aggignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
 
 ## Whitespace Removal
 

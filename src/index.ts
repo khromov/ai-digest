@@ -43,6 +43,8 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
 
     if (removeWhitespaceFlag) {
       console.log(formatLog('Whitespace removal enabled (except for whitespace-dependent languages).', '🧹'));
+    } else {
+      console.log(formatLog('Whitespace removal disabled.', '📝'));
     }
 
     const allFiles = await glob('**/*', {
@@ -115,7 +117,7 @@ program
   .description('Aggregate files into a single Markdown file')
   .option('-o, --output <file>', 'Output file name', 'codebase.md')
   .option('--no-default-ignores', 'Disable default ignore patterns')
-  .option('--no-whitespace-removal', 'Disable whitespace removal')
+  .option('--whitespace-removal', 'Enable whitespace removal')
   .action(async (options) => {
     await aggregateFiles(options.output, options.defaultIgnores, options.whitespaceRemoval);
   });
