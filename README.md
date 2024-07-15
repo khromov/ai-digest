@@ -24,12 +24,6 @@ Once you've generated the Markdown file containing your codebase, you can use it
 
 For best results, re-upload the Markdown file before starting a new chat session to ensure the AI has the most up-to-date version of your codebase.
 
-## Installation
-
-```bash
-npm install -g ai-digest
-```
-
 ## Usage
 
 ```bash
