@@ -98,8 +98,8 @@ async function aggregateFiles(outputFile: string): Promise<void> {
         const content = await fs.readFile(file, 'utf-8');
         const extension = path.extname(file).slice(1);  // Remove the leading dot
         
+        output += `# ${file}\n\n`;
         output += `\`\`\`${extension}\n`;
-        output += `// ${file}\n`;
         output += content;
         output += '\n\`\`\`\n\n';
       }
