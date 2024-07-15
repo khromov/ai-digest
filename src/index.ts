@@ -72,7 +72,9 @@ const DEFAULT_IGNORES = [
   '.env.test.local',
   '.env.production.local',
   '*.env',
-  '*.env.*'
+  '*.env.*',
+  // Our output file
+  'codebase.md'
 ];
 
 async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]> {
@@ -127,7 +129,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): P
     let customIgnoredCount = 0;
 
     for (const file of allFiles) {
-      if (useDefaultIgnores && defaultIgnore.ignores(file)) {
+      if (file === outputFile || (useDefaultIgnores && defaultIgnore.ignores(file))) {
         defaultIgnoredCount++;
       } else if (customIgnore.ignores(file)) {
         customIgnoredCount++;
@@ -149,6 +151,13 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): P
 
     // Write the file, overwriting if it exists
     await fs.writeFile(outputFile, output, { flag: 'w' });
+    
+    // Verify the file was written correctly
+    const stats = await fs.stat(outputFile);
+   
+    if (stats.size !== Buffer.byteLength(output)) {
+      throw new Error('File size mismatch after writing');
+    }
 
     console.log(`Files aggregated successfully into ${outputFile}`);
     console.log(`Total files found: ${allFiles.length}`);
