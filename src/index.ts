@@ -82,7 +82,7 @@ async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]
     return content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#'));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log(`No ${filename} file found. Using default ignores only.`);
+      console.log(`No ${filename} file found.`);
       return [];
     }
     throw error;
@@ -96,6 +96,8 @@ function createIgnoreFilter(ignorePatterns: string[]): Ignore {
     ignorePatterns.forEach(pattern => {
       console.log(`  - ${pattern}`);
     });
+  } else {
+    console.log('No custom ignore patterns found.');
   }
   return ig;
 }
@@ -105,6 +107,12 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): P
     const userIgnorePatterns = await readIgnoreFile();
     const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
     const customIgnore = createIgnoreFilter(userIgnorePatterns);
+
+    if (useDefaultIgnores) {
+      console.log('Using default ignore patterns.');
+    } else {
+      console.log('Default ignore patterns disabled.');
+    }
 
     const allFiles = await glob('**/*', {
       nodir: true,
@@ -143,7 +151,9 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): P
     if (useDefaultIgnores) {
       console.log(`Files ignored by default patterns: ${defaultIgnoredCount}`);
     }
-    console.log(`Files ignored by .aggignore: ${customIgnoredCount}`);
+    if (customIgnoredCount > 0) {
+      console.log(`Files ignored by .aggignore: ${customIgnoredCount}`);
+    }
   } catch (error) {
     console.error('Error aggregating files:', error);
     process.exit(1);
