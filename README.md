@@ -51,7 +51,7 @@ ai-digest supports custom ignore patterns using a `.aidigestignore` file in the 
 
 ## Whitespace Removal
 
-By default, ai-digest removes excess whitespace from files to reduce the token count when used with AI models. This feature is disabled for whitespace-dependent languages like Python and YAML. Use `--no-whitespace-removal` to keep all whitespace intact.
+When using the `--whitespace-removal` flag, ai-digest removes excess whitespace from files to reduce the token count when used with AI models. This feature is disabled for whitespace-dependent languages like Python and YAML.
 
 ## Local dev
 
