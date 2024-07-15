@@ -1,116 +1,121 @@
-import { Ignore } from 'ignore';
-import { encodingForModel } from 'js-tiktoken';
+import { Ignore } from "ignore";
+import { encodingForModel } from "js-tiktoken";
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
-  '.py',   // Python
-  '.yaml', // YAML
-  '.yml',  // YAML
-  '.jade', // Jade/Pug
-  '.haml', // Haml
-  '.slim', // Slim
-  '.coffee', // CoffeeScript
-  '.pug',  // Pug
-  '.styl', // Stylus
+  ".py", // Python
+  ".yaml", // YAML
+  ".yml", // YAML
+  ".jade", // Jade/Pug
+  ".haml", // Haml
+  ".slim", // Slim
+  ".coffee", // CoffeeScript
+  ".pug", // Pug
+  ".styl", // Stylus
 ];
 
 export const DEFAULT_IGNORES = [
   // Node.js
-  'node_modules',
-  'package-lock.json',
-  'npm-debug.log',
+  "node_modules",
+  "package-lock.json",
+  "npm-debug.log",
   // Yarn
-  'yarn.lock',
-  'yarn-error.log',
+  "yarn.lock",
+  "yarn-error.log",
   // pnpm
-  'pnpm-lock.yaml',
+  "pnpm-lock.yaml",
   // Bun
-  'bun.lockb',
+  "bun.lockb",
   // Deno
-  'deno.lock',
+  "deno.lock",
   // PHP (Composer)
-  'vendor',
-  'composer.lock',
+  "vendor",
+  "composer.lock",
   // Python
-  '__pycache__',
-  '*.pyc',
-  '*.pyo',
-  '*.pyd',
-  '.Python',
-  'pip-log.txt',
-  'pip-delete-this-directory.txt',
-  '.venv',
-  'venv',
-  'ENV',
-  'env',
+  "__pycache__",
+  "*.pyc",
+  "*.pyo",
+  "*.pyd",
+  ".Python",
+  "pip-log.txt",
+  "pip-delete-this-directory.txt",
+  ".venv",
+  "venv",
+  "ENV",
+  "env",
   // Ruby
-  'Gemfile.lock',
-  '.bundle',
+  "Gemfile.lock",
+  ".bundle",
   // Java
-  'target',
-  '*.class',
+  "target",
+  "*.class",
   // Gradle
-  '.gradle',
-  'build',
+  ".gradle",
+  "build",
   // Maven
-  'pom.xml.tag',
-  'pom.xml.releaseBackup',
-  'pom.xml.versionsBackup',
-  'pom.xml.next',
+  "pom.xml.tag",
+  "pom.xml.releaseBackup",
+  "pom.xml.versionsBackup",
+  "pom.xml.next",
   // .NET
-  'bin',
-  'obj',
-  '*.suo',
-  '*.user',
+  "bin",
+  "obj",
+  "*.suo",
+  "*.user",
   // Go
-  'go.sum',
+  "go.sum",
   // Rust
-  'Cargo.lock',
-  'target',
+  "Cargo.lock",
+  "target",
   // General
-  '.git',
-  '.svn',
-  '.hg',
-  '.DS_Store',
-  'Thumbs.db',
+  ".git",
+  ".svn",
+  ".hg",
+  ".DS_Store",
+  "Thumbs.db",
   // Environment variables
-  '.env',
-  '.env.local',
-  '.env.development.local',
-  '.env.test.local',
-  '.env.production.local',
-  '*.env',
-  '*.env.*',
+  ".env",
+  ".env.local",
+  ".env.development.local",
+  ".env.test.local",
+  ".env.production.local",
+  "*.env",
+  "*.env.*",
   // Our output file
-  'codebase.md'
+  "codebase.md",
 ];
 
 export function removeWhitespace(val: string): string {
-  return val.replace(/\s+/g, ' ').trim();
+  return val.replace(/\s+/g, " ").trim();
 }
 
 export function escapeTripleBackticks(content: string): string {
-  return content.replace(/```/g, '\\`\\`\\`');
+  return content.replace(/```/g, "\\`\\`\\`");
 }
 
 export function createIgnoreFilter(ignorePatterns: string[]): Ignore {
-  const ig = require('ignore')().add(ignorePatterns);
+  const ig = require("ignore")().add(ignorePatterns);
   if (ignorePatterns.length > 0) {
-    console.log('Ignore patterns from .aidigestignore:');
-    ignorePatterns.forEach(pattern => {
+    console.log("Ignore patterns from .aidigestignore:");
+    ignorePatterns.forEach((pattern) => {
       console.log(`  - ${pattern}`);
     });
   } else {
-    console.log('No custom ignore patterns found.');
+    console.log("No custom ignore patterns found.");
   }
   return ig;
 }
 
 export function estimateTokenCount(text: string): number {
-    const enc = encodingForModel('gpt-4o');
+  try {
+    const enc = encodingForModel("gpt-4o");
     const tokens = enc.encode(text);
     return tokens.length;
+  } catch (error) {
+    console.error(error);
+    return 0;
   }
-  
-  export function formatLog(message: string, emoji: string = ''): string {
-    return `${emoji ? emoji + ' ' : ''}${message}`;
-  }
+}
+
+export function formatLog(message: string, emoji: string = ""): string {
+  return `${emoji ? emoji + " " : ""}${message}`;
+}
