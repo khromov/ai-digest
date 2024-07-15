@@ -64,7 +64,15 @@ const DEFAULT_IGNORES = [
   '.svn',
   '.hg',
   '.DS_Store',
-  'Thumbs.db'
+  'Thumbs.db',
+  // Environment variables
+  '.env',
+  '.env.local',
+  '.env.development.local',
+  '.env.test.local',
+  '.env.production.local',
+  '*.env',
+  '*.env.*'
 ];
 
 async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]> {
@@ -74,7 +82,7 @@ async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]
     return content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#'));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log(`No ${filename} file found. Using default ignores.`);
+      console.log(`No ${filename} file found. Using default ignores only.`);
       return [];
     }
     throw error;
@@ -82,36 +90,40 @@ async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]
 }
 
 function createIgnoreFilter(ignorePatterns: string[]): Ignore {
-  const ig = ignore().add(DEFAULT_IGNORES);
+  const ig = ignore().add(ignorePatterns);
   if (ignorePatterns.length > 0) {
-    console.log('Additional ignore patterns:');
+    console.log('Ignore patterns from .aggignore:');
     ignorePatterns.forEach(pattern => {
       console.log(`  - ${pattern}`);
-      ig.add(pattern);
     });
   }
   return ig;
 }
 
-async function aggregateFiles(outputFile: string): Promise<void> {
+async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): Promise<void> {
   try {
     const userIgnorePatterns = await readIgnoreFile();
-    const ig = createIgnoreFilter(userIgnorePatterns);
+    const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
+    const customIgnore = createIgnoreFilter(userIgnorePatterns);
 
-    const files = await glob('**/*', {
-      ignore: [...DEFAULT_IGNORES, ...userIgnorePatterns],
+    const allFiles = await glob('**/*', {
       nodir: true,
       dot: true,
     });
 
-    console.log(`Found ${files.length} files. Applying filters...`);
+    console.log(`Found ${allFiles.length} files. Applying filters...`);
 
     let output = '';
     let includedCount = 0;
-    let ignoredCount = 0;
+    let defaultIgnoredCount = 0;
+    let customIgnoredCount = 0;
 
-    for (const file of files) {
-      if (!ig.ignores(file)) {
+    for (const file of allFiles) {
+      if (useDefaultIgnores && defaultIgnore.ignores(file)) {
+        defaultIgnoredCount++;
+      } else if (customIgnore.ignores(file)) {
+        customIgnoredCount++;
+      } else {
         const content = await fs.readFile(file, 'utf-8');
         const extension = path.extname(file).slice(1);  // Remove the leading dot
         
@@ -121,15 +133,17 @@ async function aggregateFiles(outputFile: string): Promise<void> {
         output += '\n\`\`\`\n\n';
 
         includedCount++;
-      } else {
-        ignoredCount++;
       }
     }
 
     await fs.writeFile(outputFile, output);
     console.log(`Files aggregated successfully into ${outputFile}`);
-    console.log(`Included ${includedCount} files out of ${files.length} total files.`);
-    console.log(`Ignored ${ignoredCount} files.`);
+    console.log(`Total files found: ${allFiles.length}`);
+    console.log(`Files included in output: ${includedCount}`);
+    if (useDefaultIgnores) {
+      console.log(`Files ignored by default patterns: ${defaultIgnoredCount}`);
+    }
+    console.log(`Files ignored by .aggignore: ${customIgnoredCount}`);
   } catch (error) {
     console.error('Error aggregating files:', error);
     process.exit(1);
@@ -140,8 +154,9 @@ program
   .version('1.0.0')
   .description('Aggregate files into a single Markdown file')
   .option('-o, --output <file>', 'Output file name', 'codebase.md')
+  .option('--no-default-ignores', 'Disable default ignore patterns')
   .action(async (options) => {
-    await aggregateFiles(options.output);
+    await aggregateFiles(options.output, options.defaultIgnores);
   });
 
 program.parse(process.argv);
