@@ -144,7 +144,12 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean): P
       }
     }
 
-    await fs.writeFile(outputFile, output);
+    // Ensure the directory exists
+    await fs.mkdir(path.dirname(outputFile), { recursive: true });
+
+    // Write the file, overwriting if it exists
+    await fs.writeFile(outputFile, output, { flag: 'w' });
+
     console.log(`Files aggregated successfully into ${outputFile}`);
     console.log(`Total files found: ${allFiles.length}`);
     console.log(`Files included in output: ${includedCount}`);
