@@ -10,17 +10,19 @@ import {
   DEFAULT_IGNORES,
   removeWhitespace,
   escapeTripleBackticks,
-  createIgnoreFilter
+  createIgnoreFilter,
+  estimateTokenCount,
+  formatLog
 } from './utils';
 
 async function readIgnoreFile(filename: string = '.aggignore'): Promise<string[]> {
   try {
     const content = await fs.readFile(filename, 'utf-8');
-    console.log(`Found ${filename} file.`);
+    console.log(formatLog(`Found ${filename} file.`, '📄'));
     return content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#'));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log(`No ${filename} file found.`);
+      console.log(formatLog(`No ${filename} file found.`, '❓'));
       return [];
     }
     throw error;
@@ -34,13 +36,13 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     const customIgnore = createIgnoreFilter(userIgnorePatterns);
 
     if (useDefaultIgnores) {
-      console.log('Using default ignore patterns.');
+      console.log(formatLog('Using default ignore patterns.', '🚫'));
     } else {
-      console.log('Default ignore patterns disabled.');
+      console.log(formatLog('Default ignore patterns disabled.', '✅'));
     }
 
     if (removeWhitespaceFlag) {
-      console.log('Whitespace removal enabled (except for whitespace-dependent languages).');
+      console.log(formatLog('Whitespace removal enabled (except for whitespace-dependent languages).', '🧹'));
     }
 
     const allFiles = await glob('**/*', {
@@ -48,7 +50,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
       dot: true,
     });
 
-    console.log(`Found ${allFiles.length} files. Applying filters...`);
+    console.log(formatLog(`Found ${allFiles.length} files. Applying filters...`, '🔍'));
 
     let output = '';
     let includedCount = 0;
@@ -83,23 +85,27 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     await fs.writeFile(outputFile, output, { flag: 'w' });
     
     const stats = await fs.stat(outputFile);
-    console.log(`Output file size: ${stats.size} bytes`);
+    console.log(formatLog(`Output file size: ${stats.size} bytes`, '📊'));
     
     if (stats.size !== Buffer.byteLength(output)) {
       throw new Error('File size mismatch after writing');
     }
 
-    console.log(`Files aggregated successfully into ${outputFile}`);
-    console.log(`Total files found: ${allFiles.length}`);
-    console.log(`Files included in output: ${includedCount}`);
+    const tokenCount = estimateTokenCount(output);
+
+    console.log(formatLog(`Files aggregated successfully into ${outputFile}`, '✅'));
+    console.log(formatLog(`Total files found: ${allFiles.length}`, '📚'));
+    console.log(formatLog(`Files included in output: ${includedCount}`, '📎'));
     if (useDefaultIgnores) {
-      console.log(`Files ignored by default patterns: ${defaultIgnoredCount}`);
+      console.log(formatLog(`Files ignored by default patterns: ${defaultIgnoredCount}`, '🚫'));
     }
     if (customIgnoredCount > 0) {
-      console.log(`Files ignored by .aggignore: ${customIgnoredCount}`);
+      console.log(formatLog(`Files ignored by .aggignore: ${customIgnoredCount}`, '🚫'));
     }
+    console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
+    console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
   } catch (error) {
-    console.error('Error aggregating files:', error);
+    console.error(formatLog('Error aggregating files:', '❌'), error);
     process.exit(1);
   }
 }

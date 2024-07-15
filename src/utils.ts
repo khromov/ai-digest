@@ -1,4 +1,5 @@
 import { Ignore } from 'ignore';
+import { encodingForModel } from 'js-tiktoken';
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
   '.py',   // Python
@@ -103,3 +104,13 @@ export function createIgnoreFilter(ignorePatterns: string[]): Ignore {
   }
   return ig;
 }
+
+export function estimateTokenCount(text: string): number {
+    const enc = encodingForModel('gpt-4o');
+    const tokens = enc.encode(text);
+    return tokens.length;
+  }
+  
+  export function formatLog(message: string, emoji: string = ''): string {
+    return `${emoji ? emoji + ' ' : ''}${message}`;
+  }
