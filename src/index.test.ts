@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from 'fs/promises';
+import os from 'os';
 
 const execAsync = promisify(exec);
 
@@ -71,4 +72,48 @@ describe("AI Digest CLI", () => {
     expect(content).toContain("# test/smiley.svg");
     expect(content).toContain("This is a file of the type: SVG Image");
   }, 10000);
+
+  it("should respect the --input flag", async () => {
+    // Create a temporary directory
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ai-digest-test-'));
+  
+    try {
+      // Create some test files in the temporary directory
+      await fs.writeFile(path.join(tempDir, 'test1.txt'), 'Test content 1');
+      await fs.writeFile(path.join(tempDir, 'test2.js'), 'console.log("Test content 2");');
+      
+      // Create a subdirectory with a file
+      const subDir = path.join(tempDir, 'subdir');
+      await fs.mkdir(subDir);
+      await fs.writeFile(path.join(subDir, 'test3.py'), 'print("Test content 3")');
+  
+      // Run the CLI with the --input flag
+      const { stdout } = await runCLI(`--input ${tempDir} --show-output-files`);
+  
+      // Check if the output contains only the files we created
+      expect(stdout).toContain('test1.txt');
+      expect(stdout).toContain('test2.js');
+      expect(stdout).toContain('subdir/test3.py');
+  
+      // Check if the output doesn't contain files from the project directory
+      expect(stdout).not.toContain('package.json');
+      expect(stdout).not.toContain('tsconfig.json');
+  
+      // Read the generated codebase.md file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, 'utf-8');
+  
+      // Verify the content of codebase.md
+      expect(content).toContain('# test1.txt');
+      expect(content).toContain('Test content 1');
+      expect(content).toContain('# test2.js');
+      expect(content).toContain('console.log("Test content 2");');
+      expect(content).toContain('# subdir/test3.py');
+      expect(content).toContain('print("Test content 3")');
+  
+    } finally {
+      // Clean up: remove the temporary directory and its contents
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  }, 15000); // Increased timeout to 15 seconds due to file operations
 });
