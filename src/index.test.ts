@@ -23,14 +23,12 @@ describe("AI Digest CLI", () => {
 
   it("should generate codebase.md by default", async () => {
     const { stdout } = await runCLI();
-    expect(stdout).toContain("Files aggregated successfully into codebase.md");
+    expect(stdout).toMatch(/Files aggregated successfully into .*codebase\.md/);
   }, 10000);
 
   it("should respect custom output file", async () => {
     const { stdout } = await runCLI("-o custom_output.md");
-    expect(stdout).toContain(
-      "Files aggregated successfully into custom_output.md"
-    );
+    expect(stdout).toMatch(/Files aggregated successfully into .*custom_output\.md/);
   }, 10000);
 
   it("should ignore files based on .aidigestignore", async () => {
@@ -55,8 +53,13 @@ describe("AI Digest CLI", () => {
     expect(stdout).toContain("Default ignore patterns disabled");
   }, 10000);
 
-  it("should skip binary files", async () => {
+  it("should include binary files with a note", async () => {
     const { stdout } = await runCLI();
-    expect(stdout).toContain("Binary files skipped: 1");
+    expect(stdout).toMatch(/Binary and SVG files included: \d+/);
+  }, 10000);
+
+  it("should show output files when flag is set", async () => {
+    const { stdout } = await runCLI("--show-output-files");
+    expect(stdout).toContain("Files included in the output:");
   }, 10000);
 });
