@@ -62,4 +62,13 @@ describe("AI Digest CLI", () => {
     const { stdout } = await runCLI("--show-output-files");
     expect(stdout).toContain("Files included in the output:");
   }, 10000);
+
+  it("should include SVG file with correct type in codebase.md", async () => {
+    await runCLI();
+    const codebasePath = path.resolve(__dirname, "..", "codebase.md");
+    const content = await fs.readFile(codebasePath, 'utf-8');
+    
+    expect(content).toContain("# test/smiley.svg");
+    expect(content).toContain("This is a file of the type: SVG Image");
+  }, 10000);
 });
