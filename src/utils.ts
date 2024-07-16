@@ -1,4 +1,5 @@
 import { Ignore } from "ignore";
+import { isBinaryFile } from "isbinaryfile";
 import { encodingForModel } from "js-tiktoken";
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
@@ -118,4 +119,14 @@ export function estimateTokenCount(text: string): number {
 
 export function formatLog(message: string, emoji: string = ""): string {
   return `${emoji ? emoji + " " : ""}${message}`;
+}
+
+export async function isTextFile(filePath: string): Promise<boolean> {
+  try {
+    const isBinary = await isBinaryFile(filePath);
+    return !isBinary;
+  } catch (error) {
+    console.error(`Error checking if file is binary: ${filePath}`, error);
+    return false;
+  }
 }

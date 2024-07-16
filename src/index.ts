@@ -12,7 +12,8 @@ import {
   escapeTripleBackticks,
   createIgnoreFilter,
   estimateTokenCount,
-  formatLog
+  formatLog,
+  isTextFile
 } from './utils';
 
 async function readIgnoreFile(filename: string = '.aidigestignore'): Promise<string[]> {
@@ -58,6 +59,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     let includedCount = 0;
     let defaultIgnoredCount = 0;
     let customIgnoredCount = 0;
+    let binaryFileCount = 0;
 
     for (const file of allFiles) {
       if (file === outputFile || (useDefaultIgnores && defaultIgnore.ignores(file))) {
@@ -65,21 +67,26 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
       } else if (customIgnore.ignores(file)) {
         customIgnoredCount++;
       } else {
-        let content = await fs.readFile(file, 'utf-8');
-        const extension = path.extname(file);
-        
-        content = escapeTripleBackticks(content);
-        
-        if (removeWhitespaceFlag && !WHITESPACE_DEPENDENT_EXTENSIONS.includes(extension)) {
-          content = removeWhitespace(content);
-        }
-        
-        output += `# ${file}\n\n`;
-        output += `\`\`\`${extension.slice(1)}\n`;
-        output += content;
-        output += '\n\`\`\`\n\n';
+        if (await isTextFile(file)) {
+          let content = await fs.readFile(file, 'utf-8');
+          const extension = path.extname(file);
+          
+          content = escapeTripleBackticks(content);
+          
+          if (removeWhitespaceFlag && !WHITESPACE_DEPENDENT_EXTENSIONS.includes(extension)) {
+            content = removeWhitespace(content);
+          }
+          
+          output += `# ${file}\n\n`;
+          output += `\`\`\`${extension.slice(1)}\n`;
+          output += content;
+          output += '\n\`\`\`\n\n';
 
-        includedCount++;
+          includedCount++;
+        } else {
+          // console.log(formatLog(`Skipping binary file: ${file}`, '🚫'));
+          binaryFileCount++;
+        }
       }
     }
 
@@ -87,7 +94,6 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     await fs.writeFile(outputFile, output, { flag: 'w' });
     
     const stats = await fs.stat(outputFile);
-    // console.log(formatLog(`Output file size: ${stats.size} bytes`, '📊'));
     
     if (stats.size !== Buffer.byteLength(output)) {
       throw new Error('File size mismatch after writing');
@@ -104,6 +110,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     if (customIgnoredCount > 0) {
       console.log(formatLog(`Files ignored by .aidigestignore: ${customIgnoredCount}`, '🚫'));
     }
+    console.log(formatLog(`Binary files skipped: ${binaryFileCount}`, '🚫'));
     console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
     console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
   } catch (error) {
