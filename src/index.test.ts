@@ -54,4 +54,9 @@ describe("AI Digest CLI", () => {
     const { stdout } = await runCLI("--no-default-ignores");
     expect(stdout).toContain("Default ignore patterns disabled");
   }, 10000);
+
+  it("should skip binary files", async () => {
+    const { stdout } = await runCLI();
+    expect(stdout).toContain("Binary files skipped: 1");
+  }, 10000);
 });
