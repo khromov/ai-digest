@@ -56,3 +56,5 @@ When using the `--whitespace-removal` flag, ai-digest removes excess whitespace 
 ## Local dev
 
 Run `npm run start` to run the CLI tool on the local project. (Very meta!)
+
+Run `npm test` to run the tests.
