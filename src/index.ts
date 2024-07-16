@@ -16,23 +16,24 @@ import {
   isTextFile
 } from './utils';
 
-async function readIgnoreFile(filename: string = '.aidigestignore'): Promise<string[]> {
+async function readIgnoreFile(inputDir: string, filename: string = '.aidigestignore'): Promise<string[]> {
   try {
-    const content = await fs.readFile(filename, 'utf-8');
-    console.log(formatLog(`Found ${filename} file.`, '📄'));
+    const filePath = path.join(inputDir, filename);
+    const content = await fs.readFile(filePath, 'utf-8');
+    console.log(formatLog(`Found ${filename} file in ${inputDir}.`, '📄'));
     return content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#'));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log(formatLog(`No ${filename} file found.`, '❓'));
+      console.log(formatLog(`No ${filename} file found in ${inputDir}.`, '❓'));
       return [];
     }
     throw error;
   }
 }
 
-async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean): Promise<void> {
+async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean): Promise<void> {
   try {
-    const userIgnorePatterns = await readIgnoreFile();
+    const userIgnorePatterns = await readIgnoreFile(inputDir);
     const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
     const customIgnore = createIgnoreFilter(userIgnorePatterns);
 
@@ -51,9 +52,10 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     const allFiles = await glob('**/*', {
       nodir: true,
       dot: true,
+      cwd: inputDir,
     });
 
-    console.log(formatLog(`Found ${allFiles.length} files. Applying filters...`, '🔍'));
+    console.log(formatLog(`Found ${allFiles.length} files in ${inputDir}. Applying filters...`, '🔍'));
 
     let output = '';
     let includedCount = 0;
@@ -62,13 +64,15 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     let binaryFileCount = 0;
 
     for (const file of allFiles) {
-      if (file === outputFile || (useDefaultIgnores && defaultIgnore.ignores(file))) {
+      const fullPath = path.join(inputDir, file);
+      const relativePath = path.relative(inputDir, fullPath);
+      if (path.relative(inputDir, outputFile) === relativePath || (useDefaultIgnores && defaultIgnore.ignores(relativePath))) {
         defaultIgnoredCount++;
-      } else if (customIgnore.ignores(file)) {
+      } else if (customIgnore.ignores(relativePath)) {
         customIgnoredCount++;
       } else {
-        if (await isTextFile(file)) {
-          let content = await fs.readFile(file, 'utf-8');
+        if (await isTextFile(fullPath)) {
+          let content = await fs.readFile(fullPath, 'utf-8');
           const extension = path.extname(file);
           
           content = escapeTripleBackticks(content);
@@ -77,14 +81,13 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
             content = removeWhitespace(content);
           }
           
-          output += `# ${file}\n\n`;
+          output += `# ${relativePath}\n\n`;
           output += `\`\`\`${extension.slice(1)}\n`;
           output += content;
           output += '\n\`\`\`\n\n';
 
           includedCount++;
         } else {
-          // console.log(formatLog(`Skipping binary file: ${file}`, '🚫'));
           binaryFileCount++;
         }
       }
@@ -123,11 +126,14 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
 program
   .version('1.0.0')
   .description('Aggregate files into a single Markdown file')
+  .option('-i, --input <directory>', 'Input directory', process.cwd())
   .option('-o, --output <file>', 'Output file name', 'codebase.md')
   .option('--no-default-ignores', 'Disable default ignore patterns')
   .option('--whitespace-removal', 'Enable whitespace removal')
   .action(async (options) => {
-    await aggregateFiles(options.output, options.defaultIgnores, options.whitespaceRemoval);
+    const inputDir = path.resolve(options.input);
+    const outputFile = path.isAbsolute(options.output) ? options.output : path.join(process.cwd(), options.output);
+    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval);
   });
 
 program.parse(process.argv);

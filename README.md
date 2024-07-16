@@ -4,7 +4,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 ## Features
 
-- Aggregates all files in the current directory and subdirectories
+- Aggregates all files in the specified directory and subdirectories
 - Ignores common build artifacts and configuration files
 - Outputs a single Markdown file containing the whole codebase.
 
@@ -32,6 +32,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 ## Options
 
+- `-i, --input <directory>`: Specify input directory (default: current directory)
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal
@@ -40,10 +41,10 @@ For best results, re-upload the Markdown file before starting a new chat session
 ## Example
 
 ```bash
-npx ai-digest -o project_summary.md --whitespace-removal
+npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal
 ```
 
-This creates a `project_summary.md` file containing your entire codebase with whitespace removed, ready for AI analysis.
+This creates a `project_summary.md` file containing your entire codebase from the specified input directory with whitespace removed, ready for AI analysis.
 
 ## Custom Ignore Patterns
 
