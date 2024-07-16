@@ -6,7 +6,8 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 - Aggregates all files in the specified directory and subdirectories
 - Ignores common build artifacts and configuration files
-- Outputs a single Markdown file containing the whole codebase.
+- Outputs a single Markdown file containing the whole codebase
+- Provides options for whitespace removal and custom ignore patterns
 
 ## How to Use
 
@@ -36,32 +37,72 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal
+- `--show-output-files`: Display a list of files included in the output
 - `--help`: Show help
 
-## Example
+## Examples
 
-```bash
-npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal
-```
+1. Basic usage:
 
-This creates a `project_summary.md` file containing your entire codebase from the specified input directory with whitespace removed, ready for AI analysis.
+   ```bash
+   npx ai-digest
+   ```
+
+2. Specify input and output:
+
+   ```bash
+   npx ai-digest -i /path/to/your/project -o project_summary.md
+   ```
+
+3. Enable whitespace removal:
+
+   ```bash
+   npx ai-digest --whitespace-removal
+   ```
+
+4. Show list of included files:
+
+   ```bash
+   npx ai-digest --show-output-files
+   ```
+
+5. Combine multiple options:
+
+   ```bash
+   npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files
+   ```
 
 ## Custom Ignore Patterns
 
 ai-digest supports custom ignore patterns using a `.aidigestignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
 
+Use the `--show-output-files` flag to see which files are being included, making it easier to identify candidates for exclusion.
+
+
 ## Whitespace Removal
 
 When using the `--whitespace-removal` flag, ai-digest removes excess whitespace from files to reduce the token count when used with AI models. This feature is disabled for whitespace-dependent languages like Python and YAML.
 
-## Local dev
+## Binary and SVG File Handling
+
+Binary files and SVGs are included in the output with a note about their file type. This allows AI models to be aware of these files without including their full content.
+
+## Local Development
 
 Run `npm run start` to run the CLI tool on the local project. (Very meta!)
 
 Run `npm test` to run the tests.
 
-## Deploy new version
+## Deploy New Version
 
 ```
 npm publish
 ```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.

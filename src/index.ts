@@ -35,7 +35,14 @@ async function readIgnoreFile(inputDir: string, filename: string = '.aidigestign
   }
 }
 
-async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean): Promise<void> {
+function displayIncludedFiles(includedFiles: string[]): void {
+  console.log(formatLog('Files included in the output:', '📋'));
+  includedFiles.forEach((file, index) => {
+    console.log(`${index + 1}. ${file}`);
+  });
+}
+
+async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean): Promise<void> {
   try {
     const userIgnorePatterns = await readIgnoreFile(inputDir);
     const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
@@ -66,6 +73,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
     let defaultIgnoredCount = 0;
     let customIgnoredCount = 0;
     let binaryAndSvgFileCount = 0;
+    let includedFiles: string[] = [];
 
     for (const file of allFiles) {
       const fullPath = path.join(inputDir, file);
@@ -91,6 +99,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
           output += '\n\`\`\`\n\n';
 
           includedCount++;
+          includedFiles.push(relativePath);
         } else {
           const fileType = getFileType(fullPath);
           output += `# ${relativePath}\n\n`;
@@ -102,6 +111,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
 
           binaryAndSvgFileCount++;
           includedCount++;
+          includedFiles.push(relativePath);
         }
       }
     }
@@ -137,6 +147,10 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
       console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
     }
 
+    if (showOutputFiles) {
+      displayIncludedFiles(includedFiles);
+    }
+
     console.log(formatLog(`Done! Wrote code base to ${outputFile}`, '✅'));
   } catch (error) {
     console.error(formatLog('Error aggregating files:', '❌'), error);
@@ -151,10 +165,11 @@ program
   .option('-o, --output <file>', 'Output file name', 'codebase.md')
   .option('--no-default-ignores', 'Disable default ignore patterns')
   .option('--whitespace-removal', 'Enable whitespace removal')
+  .option('--show-output-files', 'Display a list of files included in the output')
   .action(async (options) => {
     const inputDir = path.resolve(options.input);
     const outputFile = path.isAbsolute(options.output) ? options.output : path.join(process.cwd(), options.output);
-    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval);
+    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval, options.showOutputFiles);
   });
 
 program.parse(process.argv);
