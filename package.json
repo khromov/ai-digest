@@ -1,6 +1,6 @@
 {
   "name": "ai-digest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "CLI tool to aggregate files into a single Markdown file",
   "main": "dist/index.js",
   "bin": {
@@ -36,5 +36,13 @@
     "ignore": "^5.3.1",
     "isbinaryfile": "^5.0.2",
     "js-tiktoken": "^1.0.12"
+  },
+  "homepage": "https://github.com/khromov/ai-digest#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khromov/ai-digest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/khromov/ai-digest/issues"
   }
 }
