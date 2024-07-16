@@ -113,6 +113,7 @@ async function aggregateFiles(outputFile: string, useDefaultIgnores: boolean, re
     console.log(formatLog(`Binary files skipped: ${binaryFileCount}`, '🚫'));
     console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
     console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
+    console.log(formatLog(`Done! Wrote code base to ${outputFile}`, '✅'));
   } catch (error) {
     console.error(formatLog('Error aggregating files:', '❌'), error);
     process.exit(1);
