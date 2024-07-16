@@ -13,7 +13,9 @@ import {
   createIgnoreFilter,
   estimateTokenCount,
   formatLog,
-  isTextFile
+  isTextFile,
+  getFileType,
+  shouldTreatAsBinary
 } from './utils';
 
 async function readIgnoreFile(inputDir: string, filename: string = '.aidigestignore'): Promise<string[]> {
@@ -61,7 +63,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
     let includedCount = 0;
     let defaultIgnoredCount = 0;
     let customIgnoredCount = 0;
-    let binaryFileCount = 0;
+    let binaryAndSvgFileCount = 0;
 
     for (const file of allFiles) {
       const fullPath = path.join(inputDir, file);
@@ -71,7 +73,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
       } else if (customIgnore.ignores(relativePath)) {
         customIgnoredCount++;
       } else {
-        if (await isTextFile(fullPath)) {
+        if (await isTextFile(fullPath) && !shouldTreatAsBinary(fullPath)) {
           let content = await fs.readFile(fullPath, 'utf-8');
           const extension = path.extname(file);
           
@@ -88,7 +90,16 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
 
           includedCount++;
         } else {
-          binaryFileCount++;
+          const fileType = getFileType(fullPath);
+          output += `# ${relativePath}\n\n`;
+          if (fileType === 'SVG Image') {
+            output += `This is a file of the type: ${fileType}\n\n`;
+          } else {
+            output += `This is a binary file of the type: ${fileType}\n\n`;
+          }
+
+          binaryAndSvgFileCount++;
+          includedCount++;
         }
       }
     }
@@ -113,7 +124,7 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
     if (customIgnoredCount > 0) {
       console.log(formatLog(`Files ignored by .aidigestignore: ${customIgnoredCount}`, '🚫'));
     }
-    console.log(formatLog(`Binary files skipped: ${binaryFileCount}`, '🚫'));
+    console.log(formatLog(`Binary and SVG files included: ${binaryAndSvgFileCount}`, '📦'));
     console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
     console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
     console.log(formatLog(`Done! Wrote code base to ${outputFile}`, '✅'));
