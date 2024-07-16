@@ -18,6 +18,8 @@ import {
   shouldTreatAsBinary
 } from './utils';
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 async function readIgnoreFile(inputDir: string, filename: string = '.aidigestignore'): Promise<string[]> {
   try {
     const filePath = path.join(inputDir, filename);
@@ -108,12 +110,11 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
     await fs.writeFile(outputFile, output, { flag: 'w' });
     
     const stats = await fs.stat(outputFile);
+    const fileSizeInBytes = stats.size;
     
     if (stats.size !== Buffer.byteLength(output)) {
       throw new Error('File size mismatch after writing');
     }
-
-    const tokenCount = estimateTokenCount(output);
 
     console.log(formatLog(`Files aggregated successfully into ${outputFile}`, '✅'));
     console.log(formatLog(`Total files found: ${allFiles.length}`, '📚'));
@@ -125,8 +126,17 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
       console.log(formatLog(`Files ignored by .aidigestignore: ${customIgnoredCount}`, '🚫'));
     }
     console.log(formatLog(`Binary and SVG files included: ${binaryAndSvgFileCount}`, '📦'));
-    console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
-    console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
+
+    if (fileSizeInBytes > MAX_FILE_SIZE) {
+      console.log(formatLog(`Warning: Output file size (${(fileSizeInBytes / 1024 / 1024).toFixed(2)} MB) exceeds 10 MB.`, '⚠️'));
+      console.log(formatLog('Token count estimation skipped due to large file size.', '⚠️'));
+      console.log(formatLog('Consider adding more files to .aidigestignore to reduce the output size.', '💡'));
+    } else {
+      const tokenCount = estimateTokenCount(output);
+      console.log(formatLog(`Estimated token count: ${tokenCount}`, '🔢'));
+      console.log(formatLog('Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.', '⚠️'));
+    }
+
     console.log(formatLog(`Done! Wrote code base to ${outputFile}`, '✅'));
   } catch (error) {
     console.error(formatLog('Error aggregating files:', '❌'), error);
