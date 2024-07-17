@@ -82,6 +82,14 @@ export const DEFAULT_IGNORES = [
   ".env.production.local",
   "*.env",
   "*.env.*",
+  // Common framework directories
+  ".svelte-kit",
+  ".next",
+  ".nuxt",
+  ".vuepress",
+  ".cache",
+  "dist",
+  "tmp",
   // Our output file
   "codebase.md",
 ];
