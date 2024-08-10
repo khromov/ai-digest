@@ -20,7 +20,7 @@ import {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
-async function readIgnoreFile(inputDir: string, filename: string = '.aidigestignore'): Promise<string[]> {
+async function readIgnoreFile(inputDir: string, filename: string): Promise<string[]> {
   try {
     const filePath = path.join(inputDir, filename);
     const content = await fs.readFile(filePath, 'utf-8');
@@ -42,11 +42,11 @@ function displayIncludedFiles(includedFiles: string[]): void {
   });
 }
 
-async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean): Promise<void> {
+async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean, ignoreFile: string): Promise<void> {
   try {
-    const userIgnorePatterns = await readIgnoreFile(inputDir);
+    const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
     const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
-    const customIgnore = createIgnoreFilter(userIgnorePatterns);
+    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
 
     if (useDefaultIgnores) {
       console.log(formatLog('Using default ignore patterns.', '🚫'));
@@ -166,10 +166,11 @@ program
   .option('--no-default-ignores', 'Disable default ignore patterns')
   .option('--whitespace-removal', 'Enable whitespace removal')
   .option('--show-output-files', 'Display a list of files included in the output')
+  .option('--ignore-file <file>', 'Custom ignore file name', '.aidigestignore')
   .action(async (options) => {
     const inputDir = path.resolve(options.input);
     const outputFile = path.isAbsolute(options.output) ? options.output : path.join(process.cwd(), options.output);
-    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval, options.showOutputFiles);
+    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval, options.showOutputFiles, options.ignoreFile);
   });
 
 program.parse(process.argv);
