@@ -38,6 +38,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal
 - `--show-output-files`: Display a list of files included in the output
+- `--ignore-file <file>`: Specify a custom ignore file (default: .aidigestignore)
 - `--help`: Show help
 
 ## Examples
