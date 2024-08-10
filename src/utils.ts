@@ -102,10 +102,10 @@ export function escapeTripleBackticks(content: string): string {
   return content.replace(/\`\`\`/g, "\\`\\`\\`");
 }
 
-export function createIgnoreFilter(ignorePatterns: string[]): Ignore {
+export function createIgnoreFilter(ignorePatterns: string[], ignoreFile: string): Ignore {
   const ig = require("ignore")().add(ignorePatterns);
   if (ignorePatterns.length > 0) {
-    console.log("Ignore patterns from .aidigestignore:");
+    console.log(`Ignore patterns from ${ignoreFile}:`);
     ignorePatterns.forEach((pattern) => {
       console.log(`  - ${pattern}`);
     });
