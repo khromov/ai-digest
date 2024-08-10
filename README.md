@@ -94,6 +94,8 @@ Run `npm run start` to run the CLI tool on the local project. (Very meta!)
 
 Run `npm test` to run the tests.
 
+To pass flags to the CLI, use the `--` flag, like this: `npm run start -- --whitespace-removal`.
+
 ## Deploy New Version
 
 ```
