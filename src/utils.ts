@@ -92,6 +92,8 @@ export const DEFAULT_IGNORES = [
   "tmp",
   // Our output file
   "codebase.md",
+  // Turborepo cache folder
+  ".turbo"
 ];
 
 export function removeWhitespace(val: string): string {
