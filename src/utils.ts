@@ -13,6 +13,7 @@ export const WHITESPACE_DEPENDENT_EXTENSIONS = [
   ".coffee", // CoffeeScript
   ".pug", // Pug
   ".styl", // Stylus
+  ".gd", // Godot
 ];
 
 export const DEFAULT_IGNORES = [
@@ -44,6 +45,10 @@ export const DEFAULT_IGNORES = [
   "venv",
   "ENV",
   "env",
+  // Godot
+  ".godot",
+  "*.import",
+  "*.tscn",
   // Ruby
   "Gemfile.lock",
   ".bundle",
