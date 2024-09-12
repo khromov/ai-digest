@@ -155,4 +155,45 @@ describe("AI Digest CLI", () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   }, 15000);
+
+  it("should respect the --ignore flag", async () => {
+    // Create a temporary directory
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ai-digest-ignore-flag-test-'));
+  
+    try {
+      // Create some test files in the temporary directory
+      await fs.writeFile(path.join(tempDir, 'include.txt'), 'This file should be included');
+      await fs.writeFile(path.join(tempDir, 'exclude.js'), 'This file should be excluded');
+      await fs.writeFile(path.join(tempDir, 'also_exclude.py'), 'This file should also be excluded');
+
+      // Run the CLI with the --ignore flag
+      const { stdout } = await runCLI(`--input ${tempDir} --ignore '*.js' --ignore '*.py' --show-output-files`);
+
+      // Check if the output contains only the files we want to include
+      expect(stdout).toContain('include.txt');
+      expect(stdout).not.toContain('exclude.js');
+      expect(stdout).not.toContain('also_exclude.py');
+
+      // Check if the ignore patterns are mentioned
+      expect(stdout).toContain('Ignore patterns from command line:');
+      expect(stdout).toContain('  - *.js');
+      expect(stdout).toContain('  - *.py');
+
+      // Read the generated codebase.md file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, 'utf-8');
+
+      // Verify the content of codebase.md
+      expect(content).toContain('# include.txt');
+      expect(content).toContain('This file should be included');
+      expect(content).not.toContain('# exclude.js');
+      expect(content).not.toContain('This file should be excluded');
+      expect(content).not.toContain('# also_exclude.py');
+      expect(content).not.toContain('This file should also be excluded');
+
+    } finally {
+      // Clean up: remove the temporary directory and its contents
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  })
 });

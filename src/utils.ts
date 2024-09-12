@@ -109,14 +109,24 @@ export function escapeTripleBackticks(content: string): string {
   return content.replace(/\`\`\`/g, "\\`\\`\\`");
 }
 
-export function createIgnoreFilter(ignorePatterns: string[], ignoreFile: string): Ignore {
-  const ig = require("ignore")().add(ignorePatterns);
-  if (ignorePatterns.length > 0) {
+export function createIgnoreFilter(fileIgnorePatterns: string[], ignoreFile: string, inlineIgnorePatterns: string[]): Ignore {
+  const allIgnorePatterns = [...fileIgnorePatterns, ...inlineIgnorePatterns];
+  const ig = require("ignore")().add(allIgnorePatterns);
+
+  if (fileIgnorePatterns.length > 0) {
     console.log(`Ignore patterns from ${ignoreFile}:`);
-    ignorePatterns.forEach((pattern) => {
+    fileIgnorePatterns.forEach((pattern) => {
       console.log(`  - ${pattern}`);
     });
-  } else {
+  }
+  if (inlineIgnorePatterns.length > 0) {
+    console.log("Ignore patterns from command line:");
+    inlineIgnorePatterns.forEach((pattern) => {
+      console.log(`  - ${pattern}`);
+    });
+  }
+
+  if (allIgnorePatterns.length === 0) {
     console.log("No custom ignore patterns found.");
   }
   return ig;

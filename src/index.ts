@@ -42,11 +42,11 @@ function displayIncludedFiles(includedFiles: string[]): void {
   });
 }
 
-async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean, ignoreFile: string): Promise<void> {
+async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean, ignoreFile: string, inlineIgnorePatterns: string[]): Promise<void> {
   try {
     const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
     const defaultIgnore = useDefaultIgnores ? ignore().add(DEFAULT_IGNORES) : ignore();
-    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
+    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile, inlineIgnorePatterns);
 
     if (useDefaultIgnores) {
       console.log(formatLog('Using default ignore patterns.', '🚫'));
@@ -158,6 +158,10 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
   }
 }
 
+function collect(value: string, previous: string[]) {
+  return previous.concat(value);
+}
+
 program
   .version('1.0.0')
   .description('Aggregate files into a single Markdown file')
@@ -167,10 +171,11 @@ program
   .option('--whitespace-removal', 'Enable whitespace removal')
   .option('--show-output-files', 'Display a list of files included in the output')
   .option('--ignore-file <file>', 'Custom ignore file name', '.aidigestignore')
+  .option("--ignore <pattern>", 'Add ignore pattern (can be used multiple times). If using *, wrap in single quotes so the shell does not expand it.', collect, [])
   .action(async (options) => {
     const inputDir = path.resolve(options.input);
     const outputFile = path.isAbsolute(options.output) ? options.output : path.join(process.cwd(), options.output);
-    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval, options.showOutputFiles, options.ignoreFile);
+    await aggregateFiles(inputDir, outputFile, options.defaultIgnores, options.whitespaceRemoval, options.showOutputFiles, options.ignoreFile, options.ignore);
   });
 
 program.parse(process.argv);
