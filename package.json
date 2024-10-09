@@ -1,6 +1,6 @@
 {
   "name": "ai-digest",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "CLI tool to aggregate files into a single Markdown file",
   "main": "dist/index.js",
   "bin": {
