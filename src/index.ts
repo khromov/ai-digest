@@ -42,6 +42,10 @@ function displayIncludedFiles(includedFiles: string[]): void {
   });
 }
 
+function naturalSort(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
 async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIgnores: boolean, removeWhitespaceFlag: boolean, showOutputFiles: boolean, ignoreFile: string): Promise<void> {
   try {
     const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
@@ -75,7 +79,10 @@ async function aggregateFiles(inputDir: string, outputFile: string, useDefaultIg
     let binaryAndSvgFileCount = 0;
     let includedFiles: string[] = [];
 
-    for (const file of allFiles) {
+    // Sort the files in natural path order
+    const sortedFiles = allFiles.sort(naturalSort);
+
+    for (const file of sortedFiles) {
       const fullPath = path.join(inputDir, file);
       const relativePath = path.relative(inputDir, fullPath);
       if (path.relative(inputDir, outputFile) === relativePath || (useDefaultIgnores && defaultIgnore.ignores(relativePath))) {
