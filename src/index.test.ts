@@ -155,4 +155,52 @@ describe("AI Digest CLI", () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   }, 15000);
+
+  it("should sort files in natural path order", async () => {
+    // Create a temporary directory
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ai-digest-sort-test-'));
+  
+    try {
+      // Create test files and directories
+      await fs.mkdir(path.join(tempDir, '01-first'));
+      await fs.mkdir(path.join(tempDir, '02-second'));
+      await fs.mkdir(path.join(tempDir, '10-tenth'));
+      
+      await fs.writeFile(path.join(tempDir, '01-first', '01-file.txt'), 'First file');
+      await fs.writeFile(path.join(tempDir, '01-first', '02-file.txt'), 'Second file');
+      await fs.writeFile(path.join(tempDir, '02-second', '01-file.txt'), 'Third file');
+      await fs.writeFile(path.join(tempDir, '10-tenth', '01-file.txt'), 'Fourth file');
+      await fs.writeFile(path.join(tempDir, 'root-file.txt'), 'Root file');
+
+      // Run the CLI with the test directory
+      await runCLI(`--input ${tempDir}`);
+
+      // Read the generated codebase.md file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, 'utf-8');
+
+      console.log(content); // Print the content for debugging
+
+      // Define the expected order of file headers
+      const expectedOrder = [
+        '# 01-first/01-file.txt',
+        '# 01-first/02-file.txt',
+        '# 02-second/01-file.txt',
+        '# 10-tenth/01-file.txt',
+        '# root-file.txt'
+      ];
+
+      // Check if all expected headers are present and in the correct order
+      let lastIndex = -1;
+      for (const header of expectedOrder) {
+        const currentIndex = content.indexOf(header);
+        expect(currentIndex).toBeGreaterThan(lastIndex);
+        lastIndex = currentIndex;
+      }
+
+    } finally {
+      // Clean up: remove the temporary directory and its contents
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  }, 15000);
 });
