@@ -48,7 +48,6 @@ export const DEFAULT_IGNORES = [
   // Godot
   ".godot",
   "*.import",
-  "*.tscn",
   // Ruby
   "Gemfile.lock",
   ".bundle",
