@@ -100,6 +100,7 @@ export const DEFAULT_IGNORES = [
   ".turbo",
   ".vercel",
   ".netlify",
+  "LICENSE",
 ];
 
 export function removeWhitespace(val: string): string {
