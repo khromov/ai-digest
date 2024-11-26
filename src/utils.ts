@@ -97,7 +97,9 @@ export const DEFAULT_IGNORES = [
   // Our output file
   "codebase.md",
   // Turborepo cache folder
-  ".turbo"
+  ".turbo",
+  ".vercel",
+  ".netlify",
 ];
 
 export function removeWhitespace(val: string): string {
