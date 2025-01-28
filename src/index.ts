@@ -2,6 +2,7 @@
 
 import { program } from "commander";
 import { promises as fs } from "fs";
+import * as fsSync from "fs";
 import path from "path";
 import { glob } from "glob";
 import ignore from "ignore";
@@ -232,8 +233,12 @@ async function aggregateFiles(
   }
 }
 
+// Read package.json to get the version
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(fsSync.readFileSync(packageJsonPath, 'utf-8'));
+
 program
-  .version("1.0.0")
+  .version(packageJson.version)
   .description("Aggregate files into a single Markdown file")
   .option("-i, --input <directory>", "Input directory", process.cwd())
   .option("-o, --output <file>", "Output file name", "codebase.md")
