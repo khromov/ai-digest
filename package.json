@@ -1,6 +1,6 @@
 {
   "name": "ai-digest",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "CLI tool to aggregate files into a single Markdown file",
   "main": "dist/index.js",
   "bin": {
@@ -13,7 +13,8 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "prepublishOnly": "npm run build",
-    "test": "jest --config jest.config.js"
+    "test": "jest --config jest.config.js",
+    "prettier": "prettier --write \"src/**/*\""
   },
   "keywords": [
     "cli",
@@ -26,6 +27,7 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "jest": "^29.7.0",
+    "prettier": "^3.4.2",
     "ts-jest": "^29.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
