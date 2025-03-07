@@ -98,7 +98,11 @@ export async function generateDigestContent(options: {
     const defaultIgnore = useDefaultIgnores
       ? ignore().add(DEFAULT_IGNORES)
       : ignore();
-    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
+    const customIgnore = createIgnoreFilter(
+      userIgnorePatterns,
+      ignoreFile,
+      silent
+    );
 
     if (!silent) {
       if (useDefaultIgnores) {
