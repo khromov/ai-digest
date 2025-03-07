@@ -12,8 +12,6 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 ## How to Use
 
-### CLI Usage
-
 Start by running the CLI tool in your project directory:
 
 ```bash
@@ -35,30 +33,6 @@ Once you've generated the Markdown file containing your codebase, you can use it
 2. Add the Markdown file to the Project's knowledge
 
 For best results, re-upload the Markdown file before starting a new chat session to ensure the AI has the most up-to-date version of your codebase.
-
-### Library Usage
-
-You can use ai-digest programmatically in your Node.js applications:
-
-```javascript
-// ESM
-import aiDigest from "ai-digest";
-// or CommonJS
-const aiDigest = require("ai-digest").default;
-
-// Write to file (basic usage)
-await aiDigest.generateDigest({
-  inputDir: "./my-project",
-  outputFile: "my-digest.md",
-});
-
-// Get content as string
-const content = await aiDigest.generateDigest({
-  inputDir: "./my-project",
-  outputFile: null, // Return content as string instead of writing to file
-  silent: true, // Suppress console output
-});
-```
 
 ## Options
 
@@ -141,6 +115,30 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
+
+## Library Usage
+
+You can use ai-digest programmatically in your Node.js applications:
+
+```javascript
+// ESM
+import aiDigest from "ai-digest";
+// or CommonJS
+const aiDigest = require("ai-digest").default;
+
+// Write to file (basic usage)
+await aiDigest.generateDigest({
+  inputDir: "./my-project",
+  outputFile: "my-digest.md",
+});
+
+// Get content as string
+const content = await aiDigest.generateDigest({
+  inputDir: "./my-project",
+  outputFile: null, // Return content as string instead of writing to file
+  silent: true, // Suppress console output
+});
+```
 
 ## API Reference
 
