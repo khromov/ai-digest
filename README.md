@@ -38,46 +38,26 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 ### Library Usage
 
-You can also use ai-digest programmatically in your Node.js applications:
+You can use ai-digest programmatically in your Node.js applications:
 
 ```javascript
 // ESM
 import aiDigest from "ai-digest";
-
-// CommonJS
+// or CommonJS
 const aiDigest = require("ai-digest").default;
 
-// Generate digest and save to file
+// Write to file (basic usage)
 await aiDigest.generateDigest({
   inputDir: "./my-project",
   outputFile: "my-digest.md",
-  removeWhitespaceFlag: true,
 });
 
-// Generate digest and get content as string
+// Get content as string
 const content = await aiDigest.generateDigest({
   inputDir: "./my-project",
   outputFile: null, // Return content as string instead of writing to file
   silent: true, // Suppress console output
 });
-```
-
-For more advanced use cases, you can access the lower-level functions:
-
-```javascript
-import { generateDigestContent, writeDigestToFile } from "ai-digest";
-
-// Generate digest content
-const { content, stats } = await generateDigestContent({
-  inputDir: "./my-project",
-  silent: true,
-});
-
-// Do something with the content
-console.log(`Generated digest with ${stats.includedCount} files`);
-
-// Write to file later
-await writeDigestToFile(content, "output.md", stats, true);
 ```
 
 ## API Reference
