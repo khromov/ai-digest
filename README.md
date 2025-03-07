@@ -8,8 +8,11 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 - Ignores common build artifacts and configuration files
 - Outputs a single Markdown file containing the whole codebase
 - Provides options for whitespace removal and custom ignore patterns
+- Can be used programmatically as a library in Node.js projects
 
 ## How to Use
+
+### CLI Usage
 
 Start by running the CLI tool in your project directory:
 
@@ -22,16 +25,180 @@ This will generate a `codebase.md` file with your codebase.
 Once you've generated the Markdown file containing your codebase, you can use it with AI models like ChatGPT and Claude for code analysis and assistance.
 
 ### With ChatGPT:
+
 1. Create a Custom GPT
 2. Upload the generated Markdown file to the GPT's knowledge base
 
 ### With Claude:
+
 1. Create a new Project
 2. Add the Markdown file to the Project's knowledge
 
 For best results, re-upload the Markdown file before starting a new chat session to ensure the AI has the most up-to-date version of your codebase.
 
+### Library Usage
+
+You can also use ai-digest programmatically in your Node.js applications:
+
+```javascript
+// ESM
+import aiDigest from "ai-digest";
+
+// CommonJS
+const aiDigest = require("ai-digest").default;
+
+// Generate digest and save to file
+await aiDigest.generateDigest({
+  inputDir: "./my-project",
+  outputFile: "my-digest.md",
+  removeWhitespaceFlag: true,
+});
+
+// Generate digest and get content as string
+const content = await aiDigest.generateDigest({
+  inputDir: "./my-project",
+  outputFile: null, // Return content as string instead of writing to file
+  silent: true, // Suppress console output
+});
+```
+
+For more advanced use cases, you can access the lower-level functions:
+
+```javascript
+import { generateDigestContent, writeDigestToFile } from "ai-digest";
+
+// Generate digest content
+const { content, stats } = await generateDigestContent({
+  inputDir: "./my-project",
+  silent: true,
+});
+
+// Do something with the content
+console.log(`Generated digest with ${stats.includedCount} files`);
+
+// Write to file later
+await writeDigestToFile(content, "output.md", stats, true);
+```
+
+## API Reference
+
+### Main Functions
+
+#### `generateDigest(options)`
+
+The main function for programmatic usage. Generates a digest and either returns it as a string or writes it to a file.
+
+**Parameters:**
+
+- `options` (Object, optional): Configuration options
+  - `inputDir` (string, optional): Input directory path (default: `process.cwd()`)
+  - `outputFile` (string | null, optional): Output file path or `null` to return as string (default: `"codebase.md"`)
+  - `useDefaultIgnores` (boolean, optional): Whether to use default ignore patterns (default: `true`)
+  - `removeWhitespaceFlag` (boolean, optional): Whether to remove whitespace (default: `false`)
+  - `ignoreFile` (string, optional): Custom ignore file name (default: `".aidigestignore"`)
+  - `showOutputFiles` (boolean, optional): Whether to display included files (default: `false`)
+  - `silent` (boolean, optional): Whether to suppress console output (default: `false`)
+
+**Returns:**
+
+- If `outputFile` is `null`: A Promise resolving to the digest content as a string
+- Otherwise: A Promise resolving to `void` (content is written to file)
+
+**Example:**
+
+```javascript
+// Return as string
+const content = await aiDigest.generateDigest({
+  inputDir: "./src",
+  outputFile: null,
+  removeWhitespaceFlag: true,
+  silent: true,
+});
+
+// Write to file
+await aiDigest.generateDigest({
+  inputDir: "./src",
+  outputFile: "src-digest.md",
+});
+```
+
+#### `generateDigestContent(options)`
+
+Low-level function to generate the digest content and statistics without writing to a file.
+
+**Parameters:**
+
+- `options` (Object): Configuration options
+  - `inputDir` (string): Input directory path
+  - `outputFilePath` (string | null, optional): Output file path (to exclude from digest) or `null`
+  - `useDefaultIgnores` (boolean, optional): Whether to use default ignore patterns (default: `true`)
+  - `removeWhitespaceFlag` (boolean, optional): Whether to remove whitespace (default: `false`)
+  - `ignoreFile` (string, optional): Custom ignore file name (default: `".aidigestignore"`)
+  - `silent` (boolean, optional): Whether to suppress console output (default: `false`)
+
+**Returns:**
+
+- A Promise resolving to an Object containing:
+  - `content` (string): The generated digest content
+  - `stats` (Object): Statistics about the digest
+    - `totalFiles` (number): Total number of files found
+    - `includedCount` (number): Number of files included in the digest
+    - `defaultIgnoredCount` (number): Number of files ignored by default patterns
+    - `customIgnoredCount` (number): Number of files ignored by custom patterns
+    - `binaryAndSvgFileCount` (number): Number of binary and SVG files included
+    - `includedFiles` (string[]): Array of included file paths
+    - `estimatedTokens` (number): Estimated token count for AI models
+    - `fileSizeInBytes` (number): Size of the digest content in bytes
+
+**Example:**
+
+```javascript
+const { content, stats } = await aiDigest.generateDigestContent({
+  inputDir: "./project",
+  silent: true,
+});
+
+console.log(`Generated digest contains ${stats.includedCount} files`);
+console.log(`Estimated token count: ${stats.estimatedTokens}`);
+```
+
+#### `writeDigestToFile(content, outputFile, stats, showOutputFiles)`
+
+Writes the generated digest content to a file and displays statistics.
+
+**Parameters:**
+
+- `content` (string): The digest content to write
+- `outputFile` (string): Path to write the output file
+- `stats` (Object): Statistics object from `generateDigestContent`
+- `showOutputFiles` (boolean, optional): Whether to display the list of included files (default: `false`)
+
+**Returns:**
+
+- A Promise resolving to `void`
+
+**Example:**
+
+```javascript
+const { content, stats } = await aiDigest.generateDigestContent({
+  inputDir: "./project",
+});
+
+// Process or modify the content if needed
+const processedContent = content.replace(/some pattern/g, "replacement");
+
+// Write to file
+await aiDigest.writeDigestToFile(
+  processedContent,
+  "modified-digest.md",
+  stats,
+  true
+);
+```
+
 ## Options
+
+### CLI Options
 
 - `-i, --input <directory>`: Specify input directory (default: current directory)
 - `-o, --output <file>`: Specify output file (default: codebase.md)
@@ -42,6 +209,8 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `--help`: Show help
 
 ## Examples
+
+### CLI Examples
 
 1. Basic usage:
 
@@ -78,7 +247,6 @@ For best results, re-upload the Markdown file before starting a new chat session
 ai-digest supports custom ignore patterns using a `.aidigestignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
 
 Use the `--show-output-files` flag to see which files are being included, making it easier to identify candidates for exclusion.
-
 
 ## Whitespace Removal
 
