@@ -235,25 +235,20 @@ describe("AI Digest CLI", () => {
 });
 
 it("should recognize the --watch flag", async () => {
-  // This is a simple test to verify the CLI recognizes the --watch flag
-  // We're not testing the actual watching functionality as it would be complex
-  // and require mocking chokidar and process events
-
-  // Mock process.exit to prevent the test from actually exiting
-  const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-    throw new Error("Process exit called");
-  });
-
+  // This test verifies the CLI recognizes the --watch flag
+  // Set NODE_ENV to test to ensure watchFiles() exits early
+  const originalEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'test';
+  
   try {
-    // We expect this to start watch mode, which won't return
-    await runCLI("--watch");
-  } catch (error) {
-    // We expect an error because watch mode doesn't resolve naturally
-    // It should contain "Process exit called" or indicate watch mode
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    expect(errorMessage).toMatch(/Process exit called|Watch mode/);
+    // Run CLI with watch flag
+    const { stdout } = await runCLI("--watch");
+    
+    // Verify watch mode was initialized but did not hang
+    expect(stdout).toContain("Watch mode enabled");
+    expect(stdout).toContain("Waiting for file changes");
   } finally {
-    // Restore the mock
-    mockExit.mockRestore();
+    // Restore original environment
+    process.env.NODE_ENV = originalEnv;
   }
 }, 10000);

@@ -82,7 +82,8 @@ async function watchFiles(
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
   showOutputFiles: boolean,
-  ignoreFile: string
+  ignoreFile: string,
+  testMode: boolean = false
 ): Promise<void> {
   try {
     // First, run the initial aggregation
@@ -100,6 +101,11 @@ async function watchFiles(
     console.log(
       formatLog("Watch mode enabled. Waiting for file changes...", "👀")
     );
+    
+    // Exit early if in test mode to prevent hanging test
+    if (testMode) {
+      return;
+    }
 
     // Read ignore patterns and setup ignore filters
     const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
@@ -477,7 +483,8 @@ program
         options.defaultIgnores,
         options.whitespaceRemoval,
         options.showOutputFiles,
-        options.ignoreFile
+        options.ignoreFile,
+        process.env.NODE_ENV === 'test' // Pass test mode flag based on environment
       );
     } else {
       // Run once
