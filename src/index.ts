@@ -20,6 +20,7 @@ import {
   shouldTreatAsBinary,
 } from "./utils";
 
+// asfasfsfsfsafsf
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 // Simple debounce function to avoid multiple rebuilds when many files change at once
@@ -72,6 +73,9 @@ function naturalSort(a: string, b: string): number {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 }
 
+// Track if a file write is in progress
+let isWritingFile = false;
+
 async function watchFiles(
   inputDir: string,
   outputFile: string,
@@ -82,6 +86,7 @@ async function watchFiles(
 ): Promise<void> {
   try {
     // First, run the initial aggregation
+    isWritingFile = true;
     await aggregateFiles(
       inputDir,
       outputFile,
@@ -90,6 +95,7 @@ async function watchFiles(
       showOutputFiles,
       ignoreFile
     );
+    isWritingFile = false;
 
     console.log(
       formatLog("Watch mode enabled. Waiting for file changes...", "👀")
@@ -141,6 +147,7 @@ async function watchFiles(
     const debouncedRebuild = debounce(async () => {
       try {
         console.log(formatLog("Changes detected, rebuilding...", "🔄"));
+        isWritingFile = true;
         await aggregateFiles(
           inputDir,
           outputFile,
@@ -149,10 +156,12 @@ async function watchFiles(
           showOutputFiles,
           ignoreFile
         );
+        isWritingFile = false;
         console.log(
           formatLog("Rebuild complete. Waiting for more changes...", "✅")
         );
       } catch (error) {
+        isWritingFile = false;
         console.error(formatLog("Error during rebuild:", "❌"), error);
       }
     }, 500); // Debounce for 500ms
@@ -213,8 +222,32 @@ async function watchFiles(
 
     // Handle process termination
     process.on("SIGINT", () => {
-      console.log(formatLog("Watch mode terminated.", "👋"));
-      process.exit(0);
+      if (isWritingFile) {
+        console.log(
+          formatLog("Write in progress, waiting to complete...", "⏳")
+        );
+
+        // Set up a maximum wait time of 2 seconds
+        const forceExitTimeout = setTimeout(() => {
+          console.log(formatLog("Timeout reached, forcing exit.", "⚠️"));
+          process.exit(0);
+        }, 2000);
+
+        // Poll to check when writing is complete
+        const checkInterval = setInterval(() => {
+          if (!isWritingFile) {
+            clearTimeout(forceExitTimeout);
+            clearInterval(checkInterval);
+            console.log(
+              formatLog("Write complete. Watch mode terminated.", "👋")
+            );
+            process.exit(0);
+          }
+        }, 100);
+      } else {
+        console.log(formatLog("Watch mode terminated.", "👋"));
+        process.exit(0);
+      }
     });
 
     // Keep the process alive
@@ -328,14 +361,24 @@ async function aggregateFiles(
     }
 
     await fs.mkdir(path.dirname(outputFile), { recursive: true });
-    await fs.writeFile(outputFile, output, { flag: "w" });
 
-    const stats = await fs.stat(outputFile);
+    // Write to a temporary file first to prevent partial writes during SIGINT
+    const tempFile = `${outputFile}.temp`;
+    await fs.writeFile(tempFile, output, { flag: "w" });
+
+    // Verify the write was successful before moving
+    const stats = await fs.stat(tempFile);
     const fileSizeInBytes = stats.size;
 
     if (stats.size !== Buffer.byteLength(output)) {
+      // Clean up and throw error
+      await fs.unlink(tempFile).catch(() => {});
       throw new Error("File size mismatch after writing");
     }
+
+    // Atomically rename the temp file to the target file
+    // This ensures the file is either fully written or not changed at all
+    await fs.rename(tempFile, outputFile);
 
     console.log(
       formatLog(`Files aggregated successfully into ${outputFile}`, "✅")
