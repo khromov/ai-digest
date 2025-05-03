@@ -128,6 +128,11 @@ async function watchFiles(
     // Setup watcher
     const watcher = chokidar.watch(inputDir, {
       ignored: (filePath) => {
+        // Skip empty paths
+        if (!filePath) {
+          return true;
+        }
+
         // Always ignore node_modules and dot directories for performance
         if (
           filePath.includes("node_modules") ||
@@ -140,6 +145,11 @@ async function watchFiles(
 
         // Ignore the output file
         if (relativePath === outputRelPath) {
+          return true;
+        }
+
+        // Check if relativePath is empty (this can happen with some chokidar events)
+        if (!relativePath || relativePath === "") {
           return true;
         }
 

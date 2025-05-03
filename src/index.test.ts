@@ -250,7 +250,8 @@ it("should recognize the --watch flag", async () => {
   } catch (error) {
     // We expect an error because watch mode doesn't resolve naturally
     // It should contain "Process exit called" or indicate watch mode
-    expect(error.message).toMatch(/Process exit called|Watch mode/);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    expect(errorMessage).toMatch(/Process exit called|Watch mode/);
   } finally {
     // Restore the mock
     mockExit.mockRestore();
