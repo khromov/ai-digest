@@ -163,8 +163,6 @@ async function watchFiles(
       ignoreInitial: true,
       // Only use minimal ignores in watcher configuration
       ignored: ["**/node_modules/**", "**/.*/**"],
-      // Don't wait for writes to finish - improves shutdown speed
-      awaitWriteFinish: false
     });
 
     // Log when ready
@@ -185,7 +183,7 @@ async function watchFiles(
     // Also watch the ignore file itself for changes
     const ignoreFilePath = path.join(inputDir, ignoreFile);
     let ignoreWatcher: chokidar.FSWatcher | null = null;
-    
+
     try {
       const ignoreFileExists = await fs
         .access(ignoreFilePath)
@@ -197,8 +195,6 @@ async function watchFiles(
         ignoreWatcher = chokidar.watch(ignoreFilePath, {
           persistent: true,
           ignoreInitial: true,
-          // Don't wait for writes to finish - improves shutdown speed
-          awaitWriteFinish: false
         });
 
         ignoreWatcher.on("change", () => {
@@ -218,15 +214,7 @@ async function watchFiles(
     // Handle process termination
     process.on("SIGINT", () => {
       console.log(formatLog("Watch mode terminated.", "👋"));
-      
-      // Force immediate exit - don't wait for chokidar
       process.exit(0);
-      
-      // The following code won't execute but is kept to show what we're bypassing
-      // watcher.close();
-      // if (ignoreWatcher) {
-      //   ignoreWatcher.close();
-      // }
     });
 
     // Keep the process alive
