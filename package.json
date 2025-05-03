@@ -33,6 +33,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
     "commander": "^12.1.0",
     "glob": "^11.0.0",
     "ignore": "^5.3.1",

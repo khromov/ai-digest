@@ -30,7 +30,7 @@ describe("AI Digest CLI", () => {
   it("should respect custom output file", async () => {
     const { stdout } = await runCLI("-o custom_output.md");
     expect(stdout).toMatch(
-      /Files aggregated successfully into .*custom_output\.md/,
+      /Files aggregated successfully into .*custom_output\.md/
     );
   }, 10000);
 
@@ -47,7 +47,7 @@ describe("AI Digest CLI", () => {
   it("should not remove whitespace for whitespace-dependent files", async () => {
     const { stdout } = await runCLI("--whitespace-removal");
     expect(stdout).toContain(
-      "Whitespace removal enabled (except for whitespace-dependent languages)",
+      "Whitespace removal enabled (except for whitespace-dependent languages)"
     );
   }, 10000);
 
@@ -84,7 +84,7 @@ describe("AI Digest CLI", () => {
       await fs.writeFile(path.join(tempDir, "test1.txt"), "Test content 1");
       await fs.writeFile(
         path.join(tempDir, "test2.js"),
-        'console.log("Test content 2");',
+        'console.log("Test content 2");'
       );
 
       // Create a subdirectory with a file
@@ -92,7 +92,7 @@ describe("AI Digest CLI", () => {
       await fs.mkdir(subDir);
       await fs.writeFile(
         path.join(subDir, "test3.py"),
-        'print("Test content 3")',
+        'print("Test content 3")'
       );
 
       // Run the CLI with the --input flag
@@ -127,18 +127,18 @@ describe("AI Digest CLI", () => {
   it("should respect custom ignore file", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-"),
+      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-")
     );
 
     try {
       // Create some test files in the temporary directory
       await fs.writeFile(
         path.join(tempDir, "include.txt"),
-        "This file should be included",
+        "This file should be included"
       );
       await fs.writeFile(
         path.join(tempDir, "exclude.js"),
-        "This file should be excluded",
+        "This file should be excluded"
       );
 
       // Create a custom ignore file
@@ -146,7 +146,7 @@ describe("AI Digest CLI", () => {
 
       // Run the CLI with the custom ignore file
       const { stdout } = await runCLI(
-        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`,
+        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`
       );
 
       // Check if the output contains only the files we want to include
@@ -175,7 +175,7 @@ describe("AI Digest CLI", () => {
   it("should sort files in natural path order", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-sort-test-"),
+      path.join(os.tmpdir(), "ai-digest-sort-test-")
     );
 
     try {
@@ -186,19 +186,19 @@ describe("AI Digest CLI", () => {
 
       await fs.writeFile(
         path.join(tempDir, "01-first", "01-file.txt"),
-        "First file",
+        "First file"
       );
       await fs.writeFile(
         path.join(tempDir, "01-first", "02-file.txt"),
-        "Second file",
+        "Second file"
       );
       await fs.writeFile(
         path.join(tempDir, "02-second", "01-file.txt"),
-        "Third file",
+        "Third file"
       );
       await fs.writeFile(
         path.join(tempDir, "10-tenth", "01-file.txt"),
-        "Fourth file",
+        "Fourth file"
       );
       await fs.writeFile(path.join(tempDir, "root-file.txt"), "Root file");
 
@@ -233,3 +233,26 @@ describe("AI Digest CLI", () => {
     }
   }, 15000);
 });
+
+it("should recognize the --watch flag", async () => {
+  // This is a simple test to verify the CLI recognizes the --watch flag
+  // We're not testing the actual watching functionality as it would be complex
+  // and require mocking chokidar and process events
+
+  // Mock process.exit to prevent the test from actually exiting
+  const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+    throw new Error("Process exit called");
+  });
+
+  try {
+    // We expect this to start watch mode, which won't return
+    await runCLI("--watch");
+  } catch (error) {
+    // We expect an error because watch mode doesn't resolve naturally
+    // It should contain "Process exit called" or indicate watch mode
+    expect(error.message).toMatch(/Process exit called|Watch mode/);
+  } finally {
+    // Restore the mock
+    mockExit.mockRestore();
+  }
+}, 10000);

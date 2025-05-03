@@ -8,6 +8,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 - Ignores common build artifacts and configuration files
 - Outputs a single Markdown file containing the whole codebase
 - Provides options for whitespace removal and custom ignore patterns
+- Watch mode for automatic rebuilding when files change
 
 ## How to Use
 
@@ -22,10 +23,12 @@ This will generate a `codebase.md` file with your codebase.
 Once you've generated the Markdown file containing your codebase, you can use it with AI models like ChatGPT and Claude for code analysis and assistance.
 
 ### With ChatGPT:
+
 1. Create a Custom GPT
 2. Upload the generated Markdown file to the GPT's knowledge base
 
 ### With Claude:
+
 1. Create a new Project
 2. Add the Markdown file to the Project's knowledge
 
@@ -39,6 +42,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `--whitespace-removal`: Enable whitespace removal
 - `--show-output-files`: Display a list of files included in the output
 - `--ignore-file <file>`: Specify a custom ignore file (default: .aidigestignore)
+- `--watch`: Enable watch mode to automatically rebuild when files change
 - `--help`: Show help
 
 ## Examples
@@ -61,16 +65,16 @@ For best results, re-upload the Markdown file before starting a new chat session
    npx ai-digest --whitespace-removal
    ```
 
-4. Show list of included files:
+4. Watch mode:
 
    ```bash
-   npx ai-digest --show-output-files
+   npx ai-digest --watch
    ```
 
 5. Combine multiple options:
 
    ```bash
-   npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files
+   npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --watch
    ```
 
 ## Custom Ignore Patterns
@@ -79,7 +83,6 @@ ai-digest supports custom ignore patterns using a `.aidigestignore` file in the 
 
 Use the `--show-output-files` flag to see which files are being included, making it easier to identify candidates for exclusion.
 
-
 ## Whitespace Removal
 
 When using the `--whitespace-removal` flag, ai-digest removes excess whitespace from files to reduce the token count when used with AI models. This feature is disabled for whitespace-dependent languages like Python and YAML.
@@ -87,6 +90,17 @@ When using the `--whitespace-removal` flag, ai-digest removes excess whitespace 
 ## Binary and SVG File Handling
 
 Binary files and SVGs are included in the output with a note about their file type. This allows AI models to be aware of these files without including their full content.
+
+## Watch Mode
+
+When using the `--watch` flag, ai-digest will continuously monitor your files for changes and automatically regenerate the output file whenever a relevant file is modified, added, or deleted. This is especially useful during development when you're making frequent changes to your codebase.
+
+The watch mode:
+
+- Respects all ignore patterns (both default and custom)
+- Rebuilds only when non-ignored files change
+- Includes a debounce mechanism to avoid multiple rebuilds when many files change at once
+- Can be terminated with Ctrl+C
 
 ## Local Development
 
