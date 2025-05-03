@@ -14,7 +14,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 Start by running the CLI tool in your project directory:
 
-```bash
+````bash
 npx ai-digest
 ```
 
@@ -51,7 +51,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 
    ```bash
    npx ai-digest
-   ```
+````
 
 2. Specify input and output:
 

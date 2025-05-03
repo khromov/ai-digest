@@ -95,15 +95,47 @@ async function watchFiles(
       formatLog("Watch mode enabled. Waiting for file changes...", "👀")
     );
 
-    // Read ignore patterns
+    // Read ignore patterns and setup ignore filters
     const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
     const defaultIgnore = useDefaultIgnores
       ? ignore().add(DEFAULT_IGNORES)
       : ignore();
     const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
 
-    // Add the output file to the ignore list to prevent infinite rebuild loops
-    const outputRelPath = path.relative(inputDir, outputFile);
+    // Function to determine if a file should be ignored
+    function shouldIgnorePath(filePath: string): boolean {
+      if (!filePath) return true;
+
+      // Skip node_modules and dot directories for performance
+      if (filePath.includes("node_modules") || /\/\.[^\/]+\//.test(filePath)) {
+        return true;
+      }
+
+      // Get relative path for checking ignore patterns
+      const relativePath = path.relative(inputDir, filePath);
+
+      // Skip empty relative paths
+      if (!relativePath || relativePath === "") {
+        return true;
+      }
+
+      // Ignore the output file
+      if (relativePath === path.relative(inputDir, outputFile)) {
+        return true;
+      }
+
+      // Check against default ignore patterns
+      if (useDefaultIgnores && defaultIgnore.ignores(relativePath)) {
+        return true;
+      }
+
+      // Check against custom ignore patterns
+      if (customIgnore.ignores(relativePath)) {
+        return true;
+      }
+
+      return false;
+    }
 
     // Create a debounced rebuild function
     const debouncedRebuild = debounce(async () => {
@@ -125,55 +157,27 @@ async function watchFiles(
       }
     }, 500); // Debounce for 500ms
 
-    // Setup watcher
+    // Setup watcher WITHOUT using the ignored option
     const watcher = chokidar.watch(inputDir, {
-      ignored: (filePath) => {
-        // Skip empty paths
-        if (!filePath) {
-          return true;
-        }
-
-        // Always ignore node_modules and dot directories for performance
-        if (
-          filePath.includes("node_modules") ||
-          /\/\.[^\/]+\//.test(filePath)
-        ) {
-          return true;
-        }
-
-        const relativePath = path.relative(inputDir, filePath);
-
-        // Ignore the output file
-        if (relativePath === outputRelPath) {
-          return true;
-        }
-
-        // Check if relativePath is empty (this can happen with some chokidar events)
-        if (!relativePath || relativePath === "") {
-          return true;
-        }
-
-        // Check if path is ignored by default patterns
-        if (useDefaultIgnores && defaultIgnore.ignores(relativePath)) {
-          return true;
-        }
-
-        // Check if path is ignored by custom patterns
-        if (customIgnore.ignores(relativePath)) {
-          return true;
-        }
-
-        return false;
-      },
       persistent: true,
       ignoreInitial: true,
+      // Only use minimal ignores in watcher configuration
+      ignored: ["**/node_modules/**", "**/.*/**"],
     });
 
-    // Handle file events
+    // Log when ready
+    watcher.on("ready", () => {
+      console.log(formatLog("Initial scan complete. Ready for changes", "✅"));
+    });
+
+    // Handle all file events with our custom filtering
     watcher.on("all", (event, filePath) => {
-      const relativePath = path.relative(inputDir, filePath);
-      console.log(formatLog(`${event}: ${relativePath}`, "🔄"));
-      debouncedRebuild();
+      // Check if file should be ignored using our custom function
+      if (!shouldIgnorePath(filePath)) {
+        const relativePath = path.relative(inputDir, filePath);
+        console.log(formatLog(`${event}: ${relativePath}`, "🔄"));
+        debouncedRebuild();
+      }
     });
 
     // Also watch the ignore file itself for changes
@@ -185,29 +189,30 @@ async function watchFiles(
         .catch(() => false);
 
       if (ignoreFileExists) {
-        chokidar
-          .watch(ignoreFilePath, {
-            persistent: true,
-            ignoreInitial: true,
-          })
-          .on("all", (event) => {
-            console.log(
-              formatLog(
-                `${ignoreFile} ${event}, updating ignore patterns...`,
-                "📄"
-              )
-            );
-            debouncedRebuild();
-          });
+        // Create a separate watcher just for the ignore file
+        const ignoreWatcher = chokidar.watch(ignoreFilePath, {
+          persistent: true,
+          ignoreInitial: true,
+        });
+
+        ignoreWatcher.on("change", () => {
+          console.log(
+            formatLog(
+              `${ignoreFile} changed, updating ignore patterns...`,
+              "📄"
+            )
+          );
+          debouncedRebuild();
+        });
       }
     } catch (error) {
       console.error(formatLog(`Error watching ${ignoreFile}:`, "❌"), error);
     }
 
     // Handle process termination
-    process.on("SIGINT", () => {
+    process.on("SIGINT", async () => {
       console.log(formatLog("Watch mode terminated.", "👋"));
-      watcher.close();
+      await watcher.close();
       process.exit(0);
     });
 
