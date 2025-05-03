@@ -20,7 +20,6 @@ import {
   shouldTreatAsBinary,
 } from "./utils";
 
-// asfasfsfsfsafsf
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 // Simple debounce function to avoid multiple rebuilds when many files change at once
@@ -101,7 +100,7 @@ async function watchFiles(
     console.log(
       formatLog("Watch mode enabled. Waiting for file changes...", "👀")
     );
-    
+
     // Exit early if in test mode to prevent hanging test
     if (testMode) {
       return;
@@ -484,7 +483,7 @@ program
         options.whitespaceRemoval,
         options.showOutputFiles,
         options.ignoreFile,
-        process.env.NODE_ENV === 'test' // Pass test mode flag based on environment
+        process.env.NODE_ENV === "test" // Pass test mode flag based on environment
       );
     } else {
       // Run once
