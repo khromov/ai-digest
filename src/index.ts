@@ -61,14 +61,12 @@ async function readIgnoreFile(
   }
 }
 
-// Helper function to format file size in human-readable format
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// Function to display included files with size percentage bar chart
 function displayIncludedFiles(
   includedFiles: string[],
   fileSizes: Record<string, number>,
@@ -76,26 +74,22 @@ function displayIncludedFiles(
 ): void {
   console.log(formatLog("Files included in the output:", "📋"));
 
-  // Calculate total size
   const totalSize = Object.values(fileSizes).reduce(
     (sum, size) => sum + size,
     0
   );
 
-  // Prepare file list - sort by size if requested, otherwise keep original order
   let displayFiles = [...includedFiles];
   if (sortBySize) {
     displayFiles.sort((a, b) => fileSizes[b] - fileSizes[a]);
     console.log(formatLog("Files sorted by size (largest first)", "📊"));
   }
 
-  // Find max file name length for alignment
   const maxFileNameLength = Math.min(
     60, // Cap at 60 characters to prevent very long lines
     displayFiles.reduce((max, file) => Math.max(max, file.length), 0)
   );
 
-  // Display each file with size and bar
   displayFiles.forEach((file, index) => {
     const size = fileSizes[file] || 0;
     const percentage = (size / totalSize) * 100;
