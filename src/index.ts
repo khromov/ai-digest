@@ -71,7 +71,8 @@ function formatFileSize(bytes: number): string {
 // Function to display included files with size percentage bar chart
 function displayIncludedFiles(
   includedFiles: string[],
-  fileSizes: Record<string, number>
+  fileSizes: Record<string, number>,
+  sortBySize: boolean = false
 ): void {
   console.log(formatLog("Files included in the output:", "📋"));
 
@@ -81,19 +82,21 @@ function displayIncludedFiles(
     0
   );
 
-  // Sort files by size (descending)
-  const sortedFiles = [...includedFiles].sort(
-    (a, b) => fileSizes[b] - fileSizes[a]
-  );
+  // Prepare file list - sort by size if requested, otherwise keep original order
+  let displayFiles = [...includedFiles];
+  if (sortBySize) {
+    displayFiles.sort((a, b) => fileSizes[b] - fileSizes[a]);
+    console.log(formatLog("Files sorted by size (largest first)", "📊"));
+  }
 
   // Find max file name length for alignment
   const maxFileNameLength = Math.min(
     60, // Cap at 60 characters to prevent very long lines
-    sortedFiles.reduce((max, file) => Math.max(max, file.length), 0)
+    displayFiles.reduce((max, file) => Math.max(max, file.length), 0)
   );
 
   // Display each file with size and bar
-  sortedFiles.forEach((file, index) => {
+  displayFiles.forEach((file, index) => {
     const size = fileSizes[file] || 0;
     const percentage = (size / totalSize) * 100;
     const barLength = Math.max(1, Math.round(percentage / 2)); // Scale bar length (2% = 1 character), min 1 char
@@ -117,7 +120,7 @@ async function watchFiles(
   outputFile: string,
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
-  showOutputFiles: boolean,
+  showOutputFiles: string | boolean,
   ignoreFile: string,
   testMode: boolean = false
 ): Promise<void> {
@@ -305,7 +308,7 @@ async function aggregateFiles(
   outputFile: string,
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
-  showOutputFiles: boolean,
+  showOutputFiles: string | boolean,
   ignoreFile: string
 ): Promise<void> {
   try {
@@ -483,7 +486,9 @@ async function aggregateFiles(
     }
 
     if (showOutputFiles) {
-      displayIncludedFiles(includedFiles, fileSizes);
+      // Check if we should sort by size
+      const sortBySize = showOutputFiles === "sort";
+      displayIncludedFiles(includedFiles, fileSizes, sortBySize);
     }
 
     console.log(formatLog(`Done! Wrote code base to ${outputFile}`, "✅"));
@@ -505,8 +510,8 @@ program
   .option("--no-default-ignores", "Disable default ignore patterns")
   .option("--whitespace-removal", "Enable whitespace removal")
   .option(
-    "--show-output-files",
-    "Display a list of files included in the output"
+    "--show-output-files [sort]",
+    "Display a list of files included in the output, optionally sorted by size ('sort')"
   )
   .option("--ignore-file <file>", "Custom ignore file name", ".aidigestignore")
   .option("--watch", "Watch for file changes and rebuild automatically")
