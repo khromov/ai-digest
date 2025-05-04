@@ -61,10 +61,47 @@ async function readIgnoreFile(
   }
 }
 
-function displayIncludedFiles(includedFiles: string[]): void {
+// Helper function to format file size in human-readable format
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Function to display included files with size percentage bar chart
+function displayIncludedFiles(
+  includedFiles: string[],
+  fileSizes: Record<string, number>
+): void {
   console.log(formatLog("Files included in the output:", "📋"));
-  includedFiles.forEach((file, index) => {
-    console.log(`${index + 1}. ${file}`);
+
+  // Calculate total size
+  const totalSize = Object.values(fileSizes).reduce(
+    (sum, size) => sum + size,
+    0
+  );
+
+  // Sort files by size (descending)
+  const sortedFiles = [...includedFiles].sort(
+    (a, b) => fileSizes[b] - fileSizes[a]
+  );
+
+  // Find max file name length for alignment
+  const maxFileNameLength = Math.min(
+    60, // Cap at 60 characters to prevent very long lines
+    sortedFiles.reduce((max, file) => Math.max(max, file.length), 0)
+  );
+
+  // Display each file with size and bar
+  sortedFiles.forEach((file, index) => {
+    const size = fileSizes[file] || 0;
+    const percentage = (size / totalSize) * 100;
+    const barLength = Math.max(1, Math.round(percentage / 2)); // Scale bar length (2% = 1 character), min 1 char
+    const bar = "█".repeat(barLength);
+
+    console.log(
+      `${(index + 1).toString().padEnd(4)}${file.padEnd(maxFileNameLength + 2)}${formatFileSize(size).padEnd(10)}(${percentage.toFixed(1).padStart(4)}%) ${bar}`
+    );
   });
 }
 
@@ -314,6 +351,7 @@ async function aggregateFiles(
     let customIgnoredCount = 0;
     let binaryAndSvgFileCount = 0;
     let includedFiles: string[] = [];
+    let fileSizes: Record<string, number> = {};
 
     // Sort the files in natural path order
     const sortedFiles = allFiles.sort(naturalSort);
@@ -329,6 +367,10 @@ async function aggregateFiles(
       } else if (customIgnore.ignores(relativePath)) {
         customIgnoredCount++;
       } else {
+        // Get file size for stats
+        const stats = await fs.stat(fullPath);
+        fileSizes[relativePath] = stats.size;
+
         if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(file);
@@ -441,7 +483,7 @@ async function aggregateFiles(
     }
 
     if (showOutputFiles) {
-      displayIncludedFiles(includedFiles);
+      displayIncludedFiles(includedFiles, fileSizes);
     }
 
     console.log(formatLog(`Done! Wrote code base to ${outputFile}`, "✅"));
