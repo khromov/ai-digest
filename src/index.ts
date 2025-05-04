@@ -92,7 +92,7 @@ function displayIncludedFiles(
 
   displayFiles.forEach((file, index) => {
     const size = fileSizes[file] || 0;
-    const percentage = (size / totalSize) * 100;
+    const percentage = totalSize > 0 ? (size / totalSize) * 100 : 0;
     const barLength = Math.max(1, Math.round(percentage / 2)); // Scale bar length (2% = 1 character), min 1 char
     const bar = "█".repeat(barLength);
 
