@@ -8,6 +8,7 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 - Ignores common build artifacts and configuration files
 - Outputs a single Markdown file containing the whole codebase
 - Provides options for whitespace removal and custom ignore patterns
+- View file size statistics with visual bar charts
 - Watch mode for automatic rebuilding when files change
 
 ## How to Use
@@ -40,7 +41,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal
-- `--show-output-files`: Display a list of files included in the output
+- `--show-output-files [sort]`: Display a list of files with size statistics and bar charts. Add `sort` to sort by file size.
 - `--ignore-file <file>`: Specify a custom ignore file (default: .aidigestignore)
 - `--watch`: Enable watch mode to automatically rebuild when files change
 - `--help`: Show help
@@ -65,16 +66,28 @@ For best results, re-upload the Markdown file before starting a new chat session
    npx ai-digest --whitespace-removal
    ```
 
-4. Watch mode:
+4. Show files included with size statistics:
+
+   ```bash
+   npx ai-digest --show-output-files
+   ```
+
+5. Show files sorted by size (largest first):
+
+   ```bash
+   npx ai-digest --show-output-files sort
+   ```
+
+6. Watch mode:
 
    ```bash
    npx ai-digest --watch
    ```
 
-5. Combine multiple options:
+7. Combine multiple options:
 
    ```bash
-   npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --watch
+   npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files sort --watch
    ```
 
 ## Custom Ignore Patterns
