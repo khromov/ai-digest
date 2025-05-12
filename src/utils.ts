@@ -29,6 +29,7 @@ export const DEFAULT_IGNORES = [
   "pnpm-lock.yaml",
   // Bun
   "bun.lockb",
+  "bun.lock",
   // Deno
   "deno.lock",
   // PHP (Composer)
