@@ -1,4 +1,6 @@
 ### 1.2.0
+
+- Support multiple input folders (eg `--input folder1 folder2`)
 - Add Claude Sonnet token estimation
 - Upgrade packages
 
