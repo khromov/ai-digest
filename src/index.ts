@@ -110,7 +110,7 @@ function naturalSort(a: string, b: string): number {
 let isWritingFile = false;
 
 async function watchFiles(
-  inputDir: string,
+  inputDirs: string[],
   outputFile: string,
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
@@ -122,7 +122,7 @@ async function watchFiles(
     // First, run the initial aggregation
     isWritingFile = true;
     await aggregateFiles(
-      inputDir,
+      inputDirs,
       outputFile,
       useDefaultIgnores,
       removeWhitespaceFlag,
@@ -140,12 +140,24 @@ async function watchFiles(
       return;
     }
 
-    // Read ignore patterns and setup ignore filters
-    const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
+    // Read ignore patterns for each input directory
+    const allIgnorePatterns: Record<string, string[]> = {};
+    for (const inputDir of inputDirs) {
+      allIgnorePatterns[inputDir] = await readIgnoreFile(inputDir, ignoreFile);
+    }
+
     const defaultIgnore = useDefaultIgnores
       ? ignore().add(DEFAULT_IGNORES)
       : ignore();
-    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
+
+    // Create custom ignore filter for each directory
+    const customIgnores: Record<string, Ignore> = {};
+    for (const inputDir of inputDirs) {
+      customIgnores[inputDir] = createIgnoreFilter(
+        allIgnorePatterns[inputDir],
+        ignoreFile
+      );
+    }
 
     // Function to determine if a file should be ignored
     function shouldIgnorePath(filePath: string): boolean {
@@ -156,8 +168,19 @@ async function watchFiles(
         return true;
       }
 
+      // Find the corresponding input directory for this file
+      let matchingInputDir = "";
+      for (const inputDir of inputDirs) {
+        if (filePath.startsWith(inputDir)) {
+          matchingInputDir = inputDir;
+          break;
+        }
+      }
+
+      if (!matchingInputDir) return true;
+
       // Get relative path for checking ignore patterns
-      const relativePath = path.relative(inputDir, filePath);
+      const relativePath = path.relative(matchingInputDir, filePath);
 
       // Skip empty relative paths
       if (!relativePath || relativePath === "") {
@@ -165,7 +188,10 @@ async function watchFiles(
       }
 
       // Ignore the output file
-      if (relativePath === path.relative(inputDir, outputFile)) {
+      const outputAbsPath = path.isAbsolute(outputFile)
+        ? outputFile
+        : path.join(process.cwd(), outputFile);
+      if (filePath === outputAbsPath) {
         return true;
       }
 
@@ -174,8 +200,8 @@ async function watchFiles(
         return true;
       }
 
-      // Check against custom ignore patterns
-      if (customIgnore.ignores(relativePath)) {
+      // Check against custom ignore patterns for this directory
+      if (customIgnores[matchingInputDir].ignores(relativePath)) {
         return true;
       }
 
@@ -188,7 +214,7 @@ async function watchFiles(
         console.log(formatLog("Changes detected, rebuilding...", "🔄"));
         isWritingFile = true;
         await aggregateFiles(
-          inputDir,
+          inputDirs,
           outputFile,
           useDefaultIgnores,
           removeWhitespaceFlag,
@@ -205,58 +231,74 @@ async function watchFiles(
       }
     }, 500); // Debounce for 500ms
 
-    // Setup watcher WITHOUT using the ignored option
-    const watcher = chokidar.watch(inputDir, {
-      persistent: true,
-      ignoreInitial: true,
-      // Only use minimal ignores in watcher configuration
-      ignored: ["**/node_modules/**", "**/.*/**"],
-    });
+    // Setup watchers for each input directory
+    const watchers: chokidar.FSWatcher[] = [];
 
-    // Log when ready
-    watcher.on("ready", () => {
-      console.log(formatLog("Initial scan complete. Ready for changes", "✅"));
-    });
+    for (const inputDir of inputDirs) {
+      const watcher = chokidar.watch(inputDir, {
+        persistent: true,
+        ignoreInitial: true,
+        // Only use minimal ignores in watcher configuration
+        ignored: ["**/node_modules/**", "**/.*/**"],
+      });
 
-    // Handle all file events with our custom filtering
-    watcher.on("all", (event, filePath) => {
-      // Check if file should be ignored using our custom function
-      if (!shouldIgnorePath(filePath)) {
-        const relativePath = path.relative(inputDir, filePath);
-        console.log(formatLog(`${event}: ${relativePath}`, "🔄"));
-        debouncedRebuild();
-      }
-    });
+      // Log when ready
+      watcher.on("ready", () => {
+        console.log(formatLog(`Initial scan of ${inputDir} complete.`, "✅"));
+      });
 
-    // Also watch the ignore file itself for changes
-    const ignoreFilePath = path.join(inputDir, ignoreFile);
-    let ignoreWatcher: chokidar.FSWatcher | null = null;
-
-    try {
-      const ignoreFileExists = await fs
-        .access(ignoreFilePath)
-        .then(() => true)
-        .catch(() => false);
-
-      if (ignoreFileExists) {
-        // Create a separate watcher just for the ignore file
-        ignoreWatcher = chokidar.watch(ignoreFilePath, {
-          persistent: true,
-          ignoreInitial: true,
-        });
-
-        ignoreWatcher.on("change", () => {
+      // Handle all file events with our custom filtering
+      watcher.on("all", (event, filePath) => {
+        // Check if file should be ignored using our custom function
+        if (!shouldIgnorePath(filePath)) {
+          const relativePath = path.relative(inputDir, filePath);
           console.log(
-            formatLog(
-              `${ignoreFile} changed, updating ignore patterns...`,
-              "📄"
-            )
+            formatLog(`${event}: ${relativePath} in ${inputDir}`, "🔄")
           );
           debouncedRebuild();
-        });
+        }
+      });
+
+      watchers.push(watcher);
+    }
+
+    // Also watch the ignore files themselves for changes
+    const ignoreWatchers: chokidar.FSWatcher[] = [];
+
+    for (const inputDir of inputDirs) {
+      const ignoreFilePath = path.join(inputDir, ignoreFile);
+
+      try {
+        const ignoreFileExists = await fs
+          .access(ignoreFilePath)
+          .then(() => true)
+          .catch(() => false);
+
+        if (ignoreFileExists) {
+          // Create a separate watcher just for the ignore file
+          const ignoreWatcher = chokidar.watch(ignoreFilePath, {
+            persistent: true,
+            ignoreInitial: true,
+          });
+
+          ignoreWatcher.on("change", () => {
+            console.log(
+              formatLog(
+                `${ignoreFile} in ${inputDir} changed, updating ignore patterns...`,
+                "📄"
+              )
+            );
+            debouncedRebuild();
+          });
+
+          ignoreWatchers.push(ignoreWatcher);
+        }
+      } catch (error) {
+        console.error(
+          formatLog(`Error watching ${ignoreFile} in ${inputDir}:`, "❌"),
+          error
+        );
       }
-    } catch (error) {
-      console.error(formatLog(`Error watching ${ignoreFile}:`, "❌"), error);
     }
 
     // Handle process termination
@@ -298,7 +340,7 @@ async function watchFiles(
 }
 
 async function aggregateFiles(
-  inputDir: string,
+  inputDirs: string[],
   outputFile: string,
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
@@ -306,11 +348,25 @@ async function aggregateFiles(
   ignoreFile: string
 ): Promise<void> {
   try {
-    const userIgnorePatterns = await readIgnoreFile(inputDir, ignoreFile);
+    // Object to store ignore patterns for each input directory
+    const allIgnorePatterns: Record<string, string[]> = {};
+
+    for (const inputDir of inputDirs) {
+      allIgnorePatterns[inputDir] = await readIgnoreFile(inputDir, ignoreFile);
+    }
+
     const defaultIgnore = useDefaultIgnores
       ? ignore().add(DEFAULT_IGNORES)
       : ignore();
-    const customIgnore = createIgnoreFilter(userIgnorePatterns, ignoreFile);
+
+    // Create custom ignore filter for each directory
+    const customIgnores: Record<string, Ignore> = {};
+    for (const inputDir of inputDirs) {
+      customIgnores[inputDir] = createIgnoreFilter(
+        allIgnorePatterns[inputDir],
+        ignoreFile
+      );
+    }
 
     if (useDefaultIgnores) {
       console.log(formatLog("Using default ignore patterns.", "🚫"));
@@ -329,15 +385,42 @@ async function aggregateFiles(
       console.log(formatLog("Whitespace removal disabled.", "📝"));
     }
 
-    const allFiles = await glob("**/*", {
-      nodir: true,
-      dot: true,
-      cwd: inputDir,
-    });
+    // Store all file paths and their content
+    type FileEntry = {
+      relativePath: string;
+      fullPath: string;
+      sourceDir: string;
+    };
+
+    let allFileEntries: FileEntry[] = [];
+
+    // Collect files from all input directories
+    for (const inputDir of inputDirs) {
+      console.log(formatLog(`Scanning directory: ${inputDir}`, "🔍"));
+
+      const dirFiles = await glob("**/*", {
+        nodir: true,
+        dot: true,
+        cwd: inputDir,
+      });
+
+      console.log(
+        formatLog(`Found ${dirFiles.length} files in ${inputDir}`, "🔍")
+      );
+
+      for (const file of dirFiles) {
+        const fullPath = path.join(inputDir, file);
+        allFileEntries.push({
+          relativePath: file,
+          fullPath,
+          sourceDir: inputDir,
+        });
+      }
+    }
 
     console.log(
       formatLog(
-        `Found ${allFiles.length} files in ${inputDir}. Applying filters...`,
+        `Total files found across all directories: ${allFileEntries.length}`,
         "🔍"
       )
     );
@@ -351,26 +434,37 @@ async function aggregateFiles(
     let fileSizes: Record<string, number> = {};
 
     // Sort the files in natural path order
-    const sortedFiles = allFiles.sort(naturalSort);
+    allFileEntries.sort((a, b) => naturalSort(a.relativePath, b.relativePath));
 
-    for (const file of sortedFiles) {
-      const fullPath = path.join(inputDir, file);
-      const relativePath = path.relative(inputDir, fullPath);
+    for (const entry of allFileEntries) {
+      const { relativePath, fullPath, sourceDir } = entry;
+
+      // Generate a unique path for display that includes the source directory
+      // But only add the source directory name when there are multiple directories
+      const displayPath =
+        inputDirs.length > 1
+          ? `${path.basename(sourceDir)}/${relativePath}`
+          : relativePath;
+
+      const outputAbsPath = path.isAbsolute(outputFile)
+        ? outputFile
+        : path.join(process.cwd(), outputFile);
+
       if (
-        path.relative(inputDir, outputFile) === relativePath ||
+        fullPath === outputAbsPath ||
         (useDefaultIgnores && defaultIgnore.ignores(relativePath))
       ) {
         defaultIgnoredCount++;
-      } else if (customIgnore.ignores(relativePath)) {
+      } else if (customIgnores[sourceDir].ignores(relativePath)) {
         customIgnoredCount++;
       } else {
         // Get file size for stats
         const stats = await fs.stat(fullPath);
-        fileSizes[relativePath] = stats.size;
+        fileSizes[displayPath] = stats.size;
 
         if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
           let content = await fs.readFile(fullPath, "utf-8");
-          const extension = path.extname(file);
+          const extension = path.extname(relativePath);
 
           content = escapeTripleBackticks(content);
 
@@ -381,16 +475,16 @@ async function aggregateFiles(
             content = removeWhitespace(content);
           }
 
-          output += `# ${relativePath}\n\n`;
-          output += `\`\`\`${extension.slice(1)}\n`;
+          output += `# ${displayPath}\n\n`;
+          output += `\`\`\`${extension.slice(1) || ""}\n`;
           output += content;
           output += "\n\`\`\`\n\n";
 
           includedCount++;
-          includedFiles.push(relativePath);
+          includedFiles.push(displayPath);
         } else {
           const fileType = getFileType(fullPath);
-          output += `# ${relativePath}\n\n`;
+          output += `# ${displayPath}\n\n`;
           if (fileType === "SVG Image") {
             output += `This is a file of the type: ${fileType}\n\n`;
           } else {
@@ -399,7 +493,7 @@ async function aggregateFiles(
 
           binaryAndSvgFileCount++;
           includedCount++;
-          includedFiles.push(relativePath);
+          includedFiles.push(displayPath);
         }
       }
     }
@@ -427,7 +521,7 @@ async function aggregateFiles(
     console.log(
       formatLog(`Files aggregated successfully into ${outputFile}`, "✅")
     );
-    console.log(formatLog(`Total files found: ${allFiles.length}`, "📚"));
+    console.log(formatLog(`Total files found: ${allFileEntries.length}`, "📚"));
     console.log(formatLog(`Files included in output: ${includedCount}`, "📎"));
     if (useDefaultIgnores) {
       console.log(
@@ -470,7 +564,12 @@ async function aggregateFiles(
       );
     } else {
       const { gptTokens, claudeTokens } = estimateTokenCount(output);
-      console.log(formatLog(`Estimated token counts - Claude models: ${claudeTokens} tokens, GPT-4: ${gptTokens} tokens`, "🔢"));
+      console.log(
+        formatLog(
+          `Estimated token counts - Claude models: ${claudeTokens} tokens, GPT-4: ${gptTokens} tokens`,
+          "🔢"
+        )
+      );
     }
 
     if (showOutputFiles) {
@@ -493,7 +592,11 @@ const packageJson = JSON.parse(fsSync.readFileSync(packageJsonPath, "utf-8"));
 program
   .version(packageJson.version)
   .description("Aggregate files into a single Markdown file")
-  .option("-i, --input <directory>", "Input directory", process.cwd())
+  .option(
+    "-i, --input <directories...>",
+    "Input directories (multiple allowed)",
+    [process.cwd()]
+  )
   .option("-o, --output <file>", "Output file name", "codebase.md")
   .option("--no-default-ignores", "Disable default ignore patterns")
   .option("--whitespace-removal", "Enable whitespace removal")
@@ -504,7 +607,7 @@ program
   .option("--ignore-file <file>", "Custom ignore file name", ".aidigestignore")
   .option("--watch", "Watch for file changes and rebuild automatically")
   .action(async (options) => {
-    const inputDir = path.resolve(options.input);
+    const inputDirs = options.input.map((dir: string) => path.resolve(dir));
     const outputFile = path.isAbsolute(options.output)
       ? options.output
       : path.join(process.cwd(), options.output);
@@ -512,7 +615,7 @@ program
     if (options.watch) {
       // Run in watch mode
       await watchFiles(
-        inputDir,
+        inputDirs,
         outputFile,
         options.defaultIgnores,
         options.whitespaceRemoval,
@@ -523,7 +626,7 @@ program
     } else {
       // Run once
       await aggregateFiles(
-        inputDir,
+        inputDirs,
         outputFile,
         options.defaultIgnores,
         options.whitespaceRemoval,
