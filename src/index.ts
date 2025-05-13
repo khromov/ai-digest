@@ -4,7 +4,7 @@ import { program } from "commander";
 import { promises as fs } from "fs";
 import * as fsSync from "fs";
 import path from "path";
-import { glob, Ignore } from "glob";
+import { glob } from "glob";
 import ignore from "ignore";
 import * as chokidar from "chokidar";
 import {
@@ -19,6 +19,9 @@ import {
   getFileType,
   shouldTreatAsBinary,
 } from "./utils";
+
+// Define the type for the ignore instance
+type IgnoreInstance = ReturnType<typeof ignore>;
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
@@ -151,7 +154,7 @@ async function watchFiles(
       : ignore();
 
     // Create custom ignore filter for each directory
-    const customIgnores: Record<string, Ignore> = {};
+    const customIgnores: Record<string, IgnoreInstance> = {};
     for (const inputDir of inputDirs) {
       customIgnores[inputDir] = createIgnoreFilter(
         allIgnorePatterns[inputDir],
@@ -360,7 +363,7 @@ async function aggregateFiles(
       : ignore();
 
     // Create custom ignore filter for each directory
-    const customIgnores: Record<string, Ignore> = {};
+    const customIgnores: Record<string, IgnoreInstance> = {};
     for (const inputDir of inputDirs) {
       customIgnores[inputDir] = createIgnoreFilter(
         allIgnorePatterns[inputDir],
