@@ -37,7 +37,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 ## Options
 
-- `-i, --input <directory>`: Specify input directory (default: current directory)
+- `-i, --input <directories...>`: Specify input directories (multiple allowed, default: current directory)
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal
