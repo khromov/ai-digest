@@ -25,7 +25,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "jest": "^29.7.0",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.2",
@@ -35,7 +35,7 @@
   "dependencies": {
     "@anthropic-ai/tokenizer": "^0.0.4",
     "chokidar": "^4.0.3",
-    "commander": "^12.1.0",
+    "commander": "^13.1.0",
     "glob": "^11.0.2",
     "ignore": "^7.0.4",
     "isbinaryfile": "^5.0.4",
