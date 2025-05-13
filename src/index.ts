@@ -421,12 +421,14 @@ async function aggregateFiles(
       }
     }
 
-    console.log(
-      formatLog(
-        `Total files found across all directories: ${allFileEntries.length}`,
-        "🔍"
-      )
-    );
+    if (inputDirs.length > 1) {
+      console.log(
+        formatLog(
+          `Total files found across all directories: ${allFileEntries.length}`,
+          "🔍"
+        )
+      );
+    }
 
     let output = "";
     let includedCount = 0;
