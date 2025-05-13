@@ -1,6 +1,7 @@
 import { Ignore } from "ignore";
 import { isBinaryFile } from "isbinaryfile";
 import { encodingForModel } from "js-tiktoken";
+import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
@@ -129,14 +130,16 @@ export function createIgnoreFilter(
   return ig;
 }
 
-export function estimateTokenCount(text: string): number {
+export function estimateTokenCount(text: string): { gptTokens: number; claudeTokens: number } {
   try {
     const enc = encodingForModel("gpt-4o");
-    const tokens = enc.encode(text);
-    return tokens.length;
+    const gptTokens = enc.encode(text).length;
+    const claudeTokens = countTokens(text);
+    
+    return { gptTokens, claudeTokens };
   } catch (error) {
     console.error(error);
-    return 0;
+    return { gptTokens: 0, claudeTokens: 0 };
   }
 }
 

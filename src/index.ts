@@ -469,14 +469,8 @@ async function aggregateFiles(
         )
       );
     } else {
-      const tokenCount = estimateTokenCount(output);
-      console.log(formatLog(`Estimated token count: ${tokenCount}`, "🔢"));
-      console.log(
-        formatLog(
-          "Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.",
-          "⚠️"
-        )
-      );
+      const { gptTokens, claudeTokens } = estimateTokenCount(output);
+      console.log(formatLog(`Estimated token counts - Claude models: ${claudeTokens} tokens, GPT-4: ${gptTokens} tokens`, "🔢"));
     }
 
     if (showOutputFiles) {
