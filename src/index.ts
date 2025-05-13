@@ -4,7 +4,7 @@ import { program } from "commander";
 import { promises as fs } from "fs";
 import * as fsSync from "fs";
 import path from "path";
-import { glob } from "glob";
+import { glob, Ignore } from "glob";
 import ignore from "ignore";
 import * as chokidar from "chokidar";
 import {
