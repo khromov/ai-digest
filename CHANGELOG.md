@@ -1,3 +1,7 @@
+### 1.2.0
+- Add Claude Sonnet token estimation
+- Upgrade packages
+
 ### 1.1.0
 
 - Added `--watch` flag for watch mode
