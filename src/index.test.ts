@@ -232,23 +232,91 @@ describe("AI Digest CLI", () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   }, 15000);
-});
 
-it("should recognize the --watch flag", async () => {
-  // This test verifies the CLI recognizes the --watch flag
-  // Set NODE_ENV to test to ensure watchFiles() exits early
-  const originalEnv = process.env.NODE_ENV;
-  process.env.NODE_ENV = 'test';
-  
-  try {
-    // Run CLI with watch flag
-    const { stdout } = await runCLI("--watch");
-    
-    // Verify watch mode was initialized but did not hang
-    expect(stdout).toContain("Watch mode enabled");
-    expect(stdout).toContain("Waiting for file changes");
-  } finally {
-    // Restore original environment
-    process.env.NODE_ENV = originalEnv;
-  }
-}, 10000);
+  it("should recognize the --watch flag", async () => {
+    // This test verifies the CLI recognizes the --watch flag
+    // Set NODE_ENV to test to ensure watchFiles() exits early
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "test";
+
+    try {
+      // Run CLI with watch flag
+      const { stdout } = await runCLI("--watch");
+
+      // Verify watch mode was initialized but did not hang
+      expect(stdout).toContain("Watch mode enabled");
+      expect(stdout).toContain("Waiting for file changes");
+    } finally {
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
+    }
+  }, 10000);
+
+  // Test for multiple input directories
+  it("should handle multiple input directories", async () => {
+    // Create two temporary directories
+    const tempDir1 = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-test-dir1-")
+    );
+    const tempDir2 = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-test-dir2-")
+    );
+
+    try {
+      // Create test files in first directory
+      await fs.writeFile(
+        path.join(tempDir1, "dir1-file1.txt"),
+        "Content from dir1"
+      );
+      await fs.writeFile(
+        path.join(tempDir1, "common.txt"),
+        "Common file in dir1"
+      );
+
+      // Create test files in second directory
+      await fs.writeFile(
+        path.join(tempDir2, "dir2-file1.txt"),
+        "Content from dir2"
+      );
+      await fs.writeFile(
+        path.join(tempDir2, "common.txt"),
+        "Common file in dir2"
+      );
+
+      // Run CLI with multiple input directories
+      const { stdout } = await runCLI(
+        `--input ${tempDir1} ${tempDir2} --show-output-files`
+      );
+
+      // Verify output
+      expect(stdout).toContain(`Scanning directory: ${tempDir1}`);
+      expect(stdout).toContain(`Scanning directory: ${tempDir2}`);
+
+      // Verify files from both directories are included
+      expect(stdout).toContain(`${path.basename(tempDir1)}/dir1-file1.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir2)}/dir2-file1.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir1)}/common.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir2)}/common.txt`);
+
+      // Read the generated codebase.md file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, "utf-8");
+
+      // Verify content from both directories is included
+      expect(content).toContain(`# ${path.basename(tempDir1)}/dir1-file1.txt`);
+      expect(content).toContain("Content from dir1");
+      expect(content).toContain(`# ${path.basename(tempDir2)}/dir2-file1.txt`);
+      expect(content).toContain("Content from dir2");
+
+      // Check common files are included with directory prefixes
+      expect(content).toContain(`# ${path.basename(tempDir1)}/common.txt`);
+      expect(content).toContain("Common file in dir1");
+      expect(content).toContain(`# ${path.basename(tempDir2)}/common.txt`);
+      expect(content).toContain("Common file in dir2");
+    } finally {
+      // Clean up the temporary directories
+      await fs.rm(tempDir1, { recursive: true, force: true });
+      await fs.rm(tempDir2, { recursive: true, force: true });
+    }
+  }, 15000);
+});

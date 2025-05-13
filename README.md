@@ -2,15 +2,6 @@
 
 A CLI tool to aggregate your codebase into a single Markdown file for use with Claude Projects or custom ChatGPTs.
 
-## Features
-
-- Aggregates all files in the specified directory and subdirectories
-- Ignores common build artifacts and configuration files
-- Outputs a single Markdown file containing the whole codebase
-- Provides options for whitespace removal and custom ignore patterns
-- View file size statistics with visual bar charts
-- Watch mode for automatic rebuilding when files change
-
 ## How to Use
 
 Start by running the CLI tool in your project directory:
@@ -22,6 +13,15 @@ npx ai-digest
 This will generate a `codebase.md` file with your codebase.
 
 Once you've generated the Markdown file containing your codebase, you can use it with AI models like ChatGPT and Claude for code analysis and assistance.
+
+## Features
+
+- Aggregates all files in the specified directory and subdirectories
+- Ignores common build artifacts and configuration files
+- Outputs a single Markdown file containing the whole codebase
+- Provides options for whitespace removal and custom ignore patterns
+- View file size statistics with visual bar charts
+- Watch mode for automatic rebuilding when files change
 
 ### With ChatGPT:
 
@@ -37,7 +37,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 ## Options
 
-- `-i, --input <directory>`: Specify input directory (default: current directory)
+- `-i, --input <directories...>`: Specify input directories (multiple allowed, default: current directory)
 - `-o, --output <file>`: Specify output file (default: codebase.md)
 - `--no-default-ignores`: Disable default ignore patterns
 - `--whitespace-removal`: Enable whitespace removal

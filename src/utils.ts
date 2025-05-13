@@ -1,4 +1,4 @@
-import { Ignore } from "ignore";
+import ignore, { Ignore } from "ignore";
 import { isBinaryFile } from "isbinaryfile";
 import { encodingForModel } from "js-tiktoken";
 import { countTokens } from "@anthropic-ai/tokenizer";
@@ -116,8 +116,8 @@ export function escapeTripleBackticks(content: string): string {
 
 export function createIgnoreFilter(
   ignorePatterns: string[],
-  ignoreFile: string,
-): Ignore {
+  ignoreFile: string
+): ReturnType<typeof ignore> {
   const ig = require("ignore")().add(ignorePatterns);
   if (ignorePatterns.length > 0) {
     console.log(`Ignore patterns from ${ignoreFile}:`);
@@ -130,12 +130,15 @@ export function createIgnoreFilter(
   return ig;
 }
 
-export function estimateTokenCount(text: string): { gptTokens: number; claudeTokens: number } {
+export function estimateTokenCount(text: string): {
+  gptTokens: number;
+  claudeTokens: number;
+} {
   try {
     const enc = encodingForModel("gpt-4o");
     const gptTokens = enc.encode(text).length;
     const claudeTokens = countTokens(text);
-    
+
     return { gptTokens, claudeTokens };
   } catch (error) {
     console.error(error);
