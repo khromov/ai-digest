@@ -11,6 +11,15 @@ const runCLI = async (args: string = "") => {
   return execAsync(`ts-node ${cliPath} ${args}`);
 };
 
+// New helper to run CLI with specific environment variables
+const runCLIWithEnv = async (args: string = "", env: Record<string, string> = {}) => {
+  const cliPath = path.resolve(__dirname, "index.ts");
+  const envVars = Object.entries(env)
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(" ");
+  return execAsync(`${envVars} ts-node ${cliPath} ${args}`);
+};
+
 describe("AI Digest CLI", () => {
   afterAll(async () => {
     // Remove the created .md files after all tests complete
@@ -317,6 +326,46 @@ describe("AI Digest CLI", () => {
       // Clean up the temporary directories
       await fs.rm(tempDir1, { recursive: true, force: true });
       await fs.rm(tempDir2, { recursive: true, force: true });
+    }
+  }, 15000);
+
+  // New test for working directory behavior
+  it("should respect INIT_CWD when different from process.cwd()", async () => {
+    // Create a temporary directory structure
+    const tempRootDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-wd-test-"));
+    const subDir = path.join(tempRootDir, "subdir");
+    await fs.mkdir(subDir);
+    
+    // Create test files
+    await fs.writeFile(path.join(tempRootDir, "root-file.txt"), "Root file content");
+    
+    try {
+      // Run with INIT_CWD set to subdirectory but cwd unchanged
+      const env = { INIT_CWD: subDir };
+      
+      // Use the tempRootDir as input to have files to process
+      const { stdout } = await runCLIWithEnv(`--input ${tempRootDir}`, env);
+      
+      // Verify the file was created in the subdirectory (INIT_CWD)
+      const subDirOutputPath = path.join(subDir, "codebase.md");
+      const fileExists = await fs
+        .access(subDirOutputPath)
+        .then(() => true)
+        .catch(() => false);
+      
+      expect(fileExists).toBe(true);
+      
+      // Verify content includes the root file
+      const content = await fs.readFile(subDirOutputPath, "utf-8");
+      expect(content).toContain("root-file.txt");
+      expect(content).toContain("Root file content");
+      
+      // Clean up the output file
+      await fs.unlink(subDirOutputPath).catch(() => {});
+      
+    } finally {
+      // Clean up the test directories
+      await fs.rm(tempRootDir, { recursive: true, force: true });
     }
   }, 15000);
 });
