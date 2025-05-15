@@ -1,3 +1,7 @@
+### 1.2.1
+
+- Fix bug with paths when `npx ai-digest` is used in a subfolder of a monorepo
+
 ### 1.2.0
 
 - Support multiple input folders (eg `--input folder1 folder2`)
