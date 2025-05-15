@@ -25,6 +25,16 @@ type IgnoreInstance = ReturnType<typeof ignore>;
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
+function getActualWorkingDirectory() {
+  // INIT_CWD is set by npm/npx to the directory from which the command was invoked
+  // This is more reliable than process.cwd() when running via npx
+  if (process.env.INIT_CWD) {
+    return process.env.INIT_CWD;
+  }
+  
+  return process.cwd();
+}
+
 // Simple debounce function to avoid multiple rebuilds when many files change at once
 function debounce<F extends (...args: any[]) => any>(
   func: F,
@@ -193,7 +203,7 @@ async function watchFiles(
       // Ignore the output file
       const outputAbsPath = path.isAbsolute(outputFile)
         ? outputFile
-        : path.join(process.cwd(), outputFile);
+        : path.join(getActualWorkingDirectory(), outputFile);
       if (filePath === outputAbsPath) {
         return true;
       }
@@ -453,7 +463,7 @@ async function aggregateFiles(
 
       const outputAbsPath = path.isAbsolute(outputFile)
         ? outputFile
-        : path.join(process.cwd(), outputFile);
+        : path.join(getActualWorkingDirectory(), outputFile);
 
       if (
         fullPath === outputAbsPath ||
@@ -503,7 +513,7 @@ async function aggregateFiles(
       }
     }
 
-    await fs.mkdir(path.dirname(outputFile), { recursive: true });
+    await fs.mkdir(path.dirname(path.resolve(getActualWorkingDirectory(), outputFile)), { recursive: true });
 
     // Write to a temporary file first to prevent partial writes during SIGINT
     const tempFile = `${outputFile}.temp`;
@@ -600,7 +610,7 @@ program
   .option(
     "-i, --input <directories...>",
     "Input directories (multiple allowed)",
-    [process.cwd()]
+    [getActualWorkingDirectory()] // Fix: Use getActualWorkingDirectory() instead of process.cwd()
   )
   .option("-o, --output <file>", "Output file name", "codebase.md")
   .option("--no-default-ignores", "Disable default ignore patterns")
@@ -613,9 +623,10 @@ program
   .option("--watch", "Watch for file changes and rebuild automatically")
   .action(async (options) => {
     const inputDirs = options.input.map((dir: string) => path.resolve(dir));
+    // Fix: Use getActualWorkingDirectory() instead of process.cwd()
     const outputFile = path.isAbsolute(options.output)
       ? options.output
-      : path.join(process.cwd(), options.output);
+      : path.join(getActualWorkingDirectory(), options.output);
 
     if (options.watch) {
       // Run in watch mode
