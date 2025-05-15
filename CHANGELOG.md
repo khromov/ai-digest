@@ -1,3 +1,7 @@
+### 1.2.2
+
+- Bump lockfile
+
 ### 1.2.1
 
 - Fix bug with paths when `npx ai-digest` is used in a subfolder of a monorepo
