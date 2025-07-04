@@ -844,8 +844,7 @@ async function aggregateFiles(
   }
 }
 
-
-// Main library function for generating digest and optionally writing to file
+// Main library function
 export async function generateDigest(
   options: {
     inputDir?: string;

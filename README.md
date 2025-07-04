@@ -101,18 +101,17 @@ npm install ai-digest
 ```
 
 ```javascript
-import pkg from 'ai-digest';
-const { generateDigest } = pkg;
+import aiDigest from 'ai-digest';
 
 // Generate digest content as a string
-const content = await generateDigest({
+const content = await aiDigest.generateDigest({
   inputDir: './src',
   outputFile: null,  // Return as string instead of writing to file
   silent: true       // Suppress console output
 });
 
 // Or save directly to a file
-await generateDigest({
+await aiDigest.generateDigest({
   inputDir: './src',
   outputFile: 'codebase.md',
   removeWhitespaceFlag: true,
@@ -120,7 +119,7 @@ await generateDigest({
 });
 
 // Get individual file objects for custom filtering
-const { files } = await generateDigestFiles({
+const { files } = await aiDigest.generateDigestFiles({
   inputDir: './src',
   silent: true
 });
