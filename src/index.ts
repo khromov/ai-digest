@@ -129,8 +129,14 @@ function naturalSort(a: string, b: string): number {
 // Track if a file write is in progress
 let isWritingFile = false;
 
-// Core function to generate the digest content
-export async function generateDigestContent(options: {
+// Type definitions for processed files
+export type ProcessedFile = {
+  fileName: string;
+  content: string;
+};
+
+// Core function to process files and return them as an array
+export async function processFiles(options: {
   inputDirs?: string[];
   inputDir?: string;
   outputFilePath?: string | null;
@@ -139,7 +145,7 @@ export async function generateDigestContent(options: {
   ignoreFile?: string;
   silent?: boolean;
 }): Promise<{
-  content: string;
+  files: ProcessedFile[];
   stats: {
     totalFiles: number;
     includedCount: number;
@@ -147,7 +153,6 @@ export async function generateDigestContent(options: {
     customIgnoredCount: number;
     binaryAndSvgFileCount: number;
     includedFiles: string[];
-    estimatedTokens: number;
     fileSizeInBytes: number;
   };
 }> {
@@ -251,13 +256,13 @@ export async function generateDigestContent(options: {
       );
     }
 
-    let output = "";
     let includedCount = 0;
     let defaultIgnoredCount = 0;
     let customIgnoredCount = 0;
     let binaryAndSvgFileCount = 0;
     let includedFiles: string[] = [];
     let fileSizes: Record<string, number> = {};
+    let processedFiles: ProcessedFile[] = [];
 
     // Sort the files in natural path order
     allFileEntries.sort((a, b) => naturalSort(a.relativePath, b.relativePath));
@@ -290,6 +295,8 @@ export async function generateDigestContent(options: {
         const stats = await fs.stat(fullPath);
         fileSizes[displayPath] = stats.size;
 
+        let fileContent = "";
+
         if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(relativePath);
@@ -303,28 +310,87 @@ export async function generateDigestContent(options: {
             content = removeWhitespace(content);
           }
 
-          output += `# ${displayPath}\n\n`;
-          output += `\`\`\`${extension.slice(1) || ""}\n`;
-          output += content;
-          output += "\n\`\`\`\n\n";
+          fileContent = `# ${displayPath}\n\n`;
+          fileContent += `\`\`\`${extension.slice(1) || ""}\n`;
+          fileContent += content;
+          fileContent += "\n\`\`\`\n\n";
 
           includedCount++;
           includedFiles.push(displayPath);
         } else {
           const fileType = getFileType(fullPath);
-          output += `# ${displayPath}\n\n`;
+          fileContent = `# ${displayPath}\n\n`;
           if (fileType === "SVG Image") {
-            output += `This is a file of the type: ${fileType}\n\n`;
+            fileContent += `This is a file of the type: ${fileType}\n\n`;
           } else {
-            output += `This is a binary file of the type: ${fileType}\n\n`;
+            fileContent += `This is a binary file of the type: ${fileType}\n\n`;
           }
 
           binaryAndSvgFileCount++;
           includedCount++;
           includedFiles.push(displayPath);
         }
+
+        processedFiles.push({
+          fileName: displayPath,
+          content: fileContent,
+        });
       }
     }
+
+    const totalContentSize = processedFiles.reduce(
+      (sum, file) => sum + Buffer.byteLength(file.content),
+      0,
+    );
+
+    return {
+      files: processedFiles,
+      stats: {
+        totalFiles: allFileEntries.length,
+        includedCount,
+        defaultIgnoredCount,
+        customIgnoredCount,
+        binaryAndSvgFileCount,
+        includedFiles,
+        fileSizeInBytes: totalContentSize,
+      },
+    };
+  } catch (error) {
+    if (!silent) {
+      console.error(formatLog("Error processing files:", "❌"), error);
+    }
+    throw error;
+  }
+}
+
+// Core function to generate the digest content
+export async function generateDigestContent(options: {
+  inputDirs?: string[];
+  inputDir?: string;
+  outputFilePath?: string | null;
+  useDefaultIgnores?: boolean;
+  removeWhitespaceFlag?: boolean;
+  ignoreFile?: string;
+  silent?: boolean;
+}): Promise<{
+  content: string;
+  stats: {
+    totalFiles: number;
+    includedCount: number;
+    defaultIgnoredCount: number;
+    customIgnoredCount: number;
+    binaryAndSvgFileCount: number;
+    includedFiles: string[];
+    estimatedTokens: number;
+    fileSizeInBytes: number;
+  };
+}> {
+  try {
+    // Use the new processFiles function
+    const { files, stats } = await processFiles(options);
+
+    // Concatenate all files into a single output string
+    const output = files.map(file => file.content).join("");
 
     const fileSizeInBytes = Buffer.byteLength(output);
     let estimatedTokens = 0;
@@ -342,18 +408,13 @@ export async function generateDigestContent(options: {
     return {
       content: output,
       stats: {
-        totalFiles: allFileEntries.length,
-        includedCount,
-        defaultIgnoredCount,
-        customIgnoredCount,
-        binaryAndSvgFileCount,
-        includedFiles,
+        ...stats,
         estimatedTokens,
         fileSizeInBytes,
       },
     };
   } catch (error) {
-    if (!silent) {
+    if (!options.silent) {
       console.error(formatLog("Error generating digest content:", "❌"), error);
     }
     throw error;
@@ -838,6 +899,53 @@ export async function generateDigest(
   await writeDigestToFile(content, resolvedOutputFile, stats, showOutputFiles);
 }
 
+// New function to generate digest and return array of file objects
+export async function generateDigestFiles(
+  options: {
+    inputDir?: string;
+    inputDirs?: string[];
+    outputFile?: string | null;
+    useDefaultIgnores?: boolean;
+    removeWhitespaceFlag?: boolean;
+    ignoreFile?: string;
+    silent?: boolean;
+  } = {},
+): Promise<{ files: ProcessedFile[] }> {
+  const {
+    inputDir,
+    inputDirs,
+    outputFile = null,
+    useDefaultIgnores = true,
+    removeWhitespaceFlag = false,
+    ignoreFile = ".aidigestignore",
+    silent = false,
+  } = options;
+
+  // Support both single inputDir and multiple inputDirs
+  const directories =
+    inputDirs ||
+    (inputDir ? [path.resolve(inputDir)] : [getActualWorkingDirectory()]);
+
+  const resolvedOutputFile =
+    outputFile === null
+      ? null
+      : path.isAbsolute(outputFile)
+        ? outputFile
+        : path.join(getActualWorkingDirectory(), outputFile);
+
+  // Process files and return the array format
+  const { files } = await processFiles({
+    inputDirs: directories,
+    outputFilePath: resolvedOutputFile,
+    useDefaultIgnores,
+    removeWhitespaceFlag,
+    ignoreFile,
+    silent,
+  });
+
+  return { files };
+}
+
 // CLI functionality
 if (require.main === module) {
   // Read package.json to get the version
@@ -901,6 +1009,8 @@ if (require.main === module) {
 // Default export for library usage
 export default {
   generateDigest,
+  generateDigestFiles,
   generateDigestContent,
   writeDigestToFile,
+  processFiles,
 };

@@ -1,8 +1,9 @@
 {
   "name": "ai-digest",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "CLI tool to aggregate files into a single Markdown file",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "ai-digest": "./dist/index.js"
   },
