@@ -118,10 +118,26 @@ await generateDigest({
   removeWhitespaceFlag: true,
   showOutputFiles: 'sort'
 });
+
+// Get individual file objects for custom filtering
+const { files } = await generateDigestFiles({
+  inputDir: './src',
+  silent: true
+});
+
+// Each file has: { fileName: string, content: string }
+// Content format is identical to generateDigest() but per-file
+console.log(files[0].fileName);  // e.g., "index.ts"
+console.log(files[0].content);   // "# index.ts\n\n```ts\n// file content...\n```\n\n"
+
+// Apply custom filtering after processing
+const jsFiles = files.filter(file => file.fileName.endsWith('.js'));
+const customDigest = jsFiles.map(file => file.content).join('');
 ```
 
 **Available functions:**
 - `generateDigest(options)` - Main function for generating digests
+- `generateDigestFiles(options)` - Generate digest and return array of individual file objects
 - `generateDigestContent(options)` - Lower-level function that returns content and stats
 - `writeDigestToFile(content, outputFile, stats)` - Write digest content to a file
 

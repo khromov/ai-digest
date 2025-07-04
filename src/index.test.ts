@@ -7,6 +7,7 @@ import os from "os";
 // Import the library functions for direct testing
 import aiDigest, {
   generateDigest,
+  generateDigestFiles,
   generateDigestContent,
   writeDigestToFile,
 } from "./index";
@@ -414,6 +415,7 @@ describe("AI Digest Library API", () => {
   it("should be importable as a module", () => {
     expect(aiDigest).toBeDefined();
     expect(generateDigest).toBeDefined();
+    expect(generateDigestFiles).toBeDefined();
     expect(generateDigestContent).toBeDefined();
     expect(writeDigestToFile).toBeDefined();
   });
@@ -572,5 +574,157 @@ describe("AI Digest Library API", () => {
 
     // Clean up
     consoleLogSpy.mockRestore();
+  });
+
+  it("should return array of file objects with generateDigestFiles", async () => {
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    expect(result).toHaveProperty("files");
+    expect(Array.isArray(result.files)).toBe(true);
+    expect(result.files).toHaveLength(3);
+
+    // Check that each file has the expected structure
+    result.files.forEach((file) => {
+      expect(file).toHaveProperty("fileName");
+      expect(file).toHaveProperty("content");
+      expect(typeof file.fileName).toBe("string");
+      expect(typeof file.content).toBe("string");
+    });
+
+    // Check specific files are included
+    const fileNames = result.files.map((f) => f.fileName);
+    expect(fileNames).toContain("file1.txt");
+    expect(fileNames).toContain("file2.js");
+    expect(fileNames).toContain("subdir/file3.py");
+  });
+
+  it("should format file content correctly in generateDigestFiles", async () => {
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    const file1 = result.files.find((f) => f.fileName === "file1.txt");
+    expect(file1).toBeDefined();
+    expect(file1!.content).toContain("# file1.txt");
+    expect(file1!.content).toContain("```txt");
+    expect(file1!.content).toContain("Test content 1");
+    expect(file1!.content).toMatch(/```\n\n$/);
+
+    const file2 = result.files.find((f) => f.fileName === "file2.js");
+    expect(file2).toBeDefined();
+    expect(file2!.content).toContain("# file2.js");
+    expect(file2!.content).toContain("```js");
+    expect(file2!.content).toContain('console.log("Test content 2");');
+  });
+
+  it("should respect ignore patterns with generateDigestFiles", async () => {
+    // Create an ignore file
+    await fs.writeFile(path.join(tempDir, ".aidigestignore"), "*.js");
+
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    const fileNames = result.files.map((f) => f.fileName);
+    expect(fileNames).not.toContain("file2.js");
+    expect(fileNames).toContain("file1.txt");
+    expect(fileNames).toContain("subdir/file3.py");
+  });
+
+  it("should respect whitespace removal option with generateDigestFiles", async () => {
+    // Create a file with whitespace
+    await fs.writeFile(
+      path.join(tempDir, "whitespace.js"),
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+    );
+
+    // With whitespace removal
+    const resultWithRemoval = await generateDigestFiles({
+      inputDir: tempDir,
+      removeWhitespaceFlag: true,
+      silent: true,
+    });
+
+    // Without whitespace removal
+    const resultWithoutRemoval = await generateDigestFiles({
+      inputDir: tempDir,
+      removeWhitespaceFlag: false,
+      silent: true,
+    });
+
+    const whitespaceFileWithRemoval = resultWithRemoval.files.find(
+      (f) => f.fileName === "whitespace.js",
+    );
+    const whitespaceFileWithoutRemoval = resultWithoutRemoval.files.find(
+      (f) => f.fileName === "whitespace.js",
+    );
+
+    expect(whitespaceFileWithRemoval!.content).toContain(
+      'function test() { console.log("multiple spaces"); }',
+    );
+    expect(whitespaceFileWithoutRemoval!.content).toContain(
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+    );
+  });
+
+  it("should work with multiple input directories in generateDigestFiles", async () => {
+    // Create another temp directory
+    const tempDir2 = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-test2-"),
+    );
+
+    try {
+      // Create files in second directory
+      await fs.writeFile(path.join(tempDir2, "file4.md"), "# Markdown content");
+
+      const result = await generateDigestFiles({
+        inputDirs: [tempDir, tempDir2],
+        silent: true,
+      });
+
+      const fileNames = result.files.map((f) => f.fileName);
+
+      // With multiple directories, all files should be prefixed with directory name
+      const tempDir1Name = path.basename(tempDir);
+      const tempDir2Name = path.basename(tempDir2);
+      
+      expect(fileNames).toContain(`${tempDir1Name}/file1.txt`);
+      expect(fileNames).toContain(`${tempDir1Name}/file2.js`);
+      expect(fileNames).toContain(`${tempDir2Name}/file4.md`);
+    } finally {
+      await fs.rm(tempDir2, { recursive: true, force: true }).catch(() => {});
+    }
+  });
+
+  it("should work with default export for generateDigestFiles", async () => {
+    const result = await aiDigest.generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    expect(result).toHaveProperty("files");
+    expect(Array.isArray(result.files)).toBe(true);
+    expect(result.files.length).toBeGreaterThan(0);
+  });
+
+  it("should handle binary files correctly in generateDigestFiles", async () => {
+    // Create a simple binary file (using Buffer to ensure it's binary)
+    const binaryData = Buffer.from([0x89, 0x50, 0x4e, 0x47]); // PNG header
+    await fs.writeFile(path.join(tempDir, "image.png"), binaryData);
+
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    const binaryFile = result.files.find((f) => f.fileName === "image.png");
+    expect(binaryFile).toBeDefined();
+    expect(binaryFile!.content).toContain("# image.png");
+    expect(binaryFile!.content).toContain("This is a binary file of the type:");
   });
 });
