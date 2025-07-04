@@ -18,6 +18,15 @@ const runCLI = async (args: string = "") => {
   return execAsync(`ts-node ${cliPath} ${args}`);
 };
 
+// New helper to run CLI with specific environment variables
+const runCLIWithEnv = async (args: string = "", env: Record<string, string> = {}) => {
+  const cliPath = path.resolve(__dirname, "index.ts");
+  const envVars = Object.entries(env)
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(" ");
+  return execAsync(`${envVars} ts-node ${cliPath} ${args}`);
+};
+
 describe("AI Digest CLI", () => {
   afterAll(async () => {
     // Remove the created .md files after all tests complete
@@ -235,6 +244,133 @@ describe("AI Digest CLI", () => {
     } finally {
       // Clean up: remove the temporary directory and its contents
       await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  }, 15000);
+
+  it("should recognize the --watch flag", async () => {
+    // This test verifies the CLI recognizes the --watch flag
+    // Set NODE_ENV to test to ensure watchFiles() exits early
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "test";
+
+    try {
+      // Run CLI with watch flag
+      const { stdout } = await runCLI("--watch");
+
+      // Verify watch mode was initialized but did not hang
+      expect(stdout).toContain("Watch mode enabled");
+      expect(stdout).toContain("Waiting for file changes");
+    } finally {
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
+    }
+  }, 10000);
+
+  // Test for multiple input directories
+  it("should handle multiple input directories", async () => {
+    // Create two temporary directories
+    const tempDir1 = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-test-dir1-")
+    );
+    const tempDir2 = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-test-dir2-")
+    );
+
+    try {
+      // Create test files in first directory
+      await fs.writeFile(
+        path.join(tempDir1, "dir1-file1.txt"),
+        "Content from dir1"
+      );
+      await fs.writeFile(
+        path.join(tempDir1, "common.txt"),
+        "Common file in dir1"
+      );
+
+      // Create test files in second directory
+      await fs.writeFile(
+        path.join(tempDir2, "dir2-file1.txt"),
+        "Content from dir2"
+      );
+      await fs.writeFile(
+        path.join(tempDir2, "common.txt"),
+        "Common file in dir2"
+      );
+
+      // Run CLI with multiple input directories
+      const { stdout } = await runCLI(
+        `--input ${tempDir1} ${tempDir2} --show-output-files`
+      );
+
+      // Verify output
+      expect(stdout).toContain(`Scanning directory: ${tempDir1}`);
+      expect(stdout).toContain(`Scanning directory: ${tempDir2}`);
+
+      // Verify files from both directories are included
+      expect(stdout).toContain(`${path.basename(tempDir1)}/dir1-file1.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir2)}/dir2-file1.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir1)}/common.txt`);
+      expect(stdout).toContain(`${path.basename(tempDir2)}/common.txt`);
+
+      // Read the generated codebase.md file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, "utf-8");
+
+      // Verify content from both directories is included
+      expect(content).toContain(`# ${path.basename(tempDir1)}/dir1-file1.txt`);
+      expect(content).toContain("Content from dir1");
+      expect(content).toContain(`# ${path.basename(tempDir2)}/dir2-file1.txt`);
+      expect(content).toContain("Content from dir2");
+
+      // Check common files are included with directory prefixes
+      expect(content).toContain(`# ${path.basename(tempDir1)}/common.txt`);
+      expect(content).toContain("Common file in dir1");
+      expect(content).toContain(`# ${path.basename(tempDir2)}/common.txt`);
+      expect(content).toContain("Common file in dir2");
+    } finally {
+      // Clean up the temporary directories
+      await fs.rm(tempDir1, { recursive: true, force: true });
+      await fs.rm(tempDir2, { recursive: true, force: true });
+    }
+  }, 15000);
+
+  // New test for working directory behavior
+  it("should respect INIT_CWD when different from process.cwd()", async () => {
+    // Create a temporary directory structure
+    const tempRootDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-wd-test-"));
+    const subDir = path.join(tempRootDir, "subdir");
+    await fs.mkdir(subDir);
+    
+    // Create test files
+    await fs.writeFile(path.join(tempRootDir, "root-file.txt"), "Root file content");
+    
+    try {
+      // Run with INIT_CWD set to subdirectory but cwd unchanged
+      const env = { INIT_CWD: subDir };
+      
+      // Use the tempRootDir as input to have files to process
+      await runCLIWithEnv(`--input ${tempRootDir}`, env);
+      
+      // Verify the file was created in the subdirectory (INIT_CWD)
+      const subDirOutputPath = path.join(subDir, "codebase.md");
+      const fileExists = await fs
+        .access(subDirOutputPath)
+        .then(() => true)
+        .catch(() => false);
+      
+      expect(fileExists).toBe(true);
+      
+      // Verify content includes the root file
+      const content = await fs.readFile(subDirOutputPath, "utf-8");
+      expect(content).toContain("root-file.txt");
+      expect(content).toContain("Root file content");
+      
+      // Clean up the output file
+      await fs.unlink(subDirOutputPath).catch(() => {});
+      
+    } finally {
+      // Clean up the test directories
+      await fs.rm(tempRootDir, { recursive: true, force: true });
     }
   }, 15000);
 });
