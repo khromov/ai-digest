@@ -92,6 +92,38 @@ For best results, re-upload the Markdown file before starting a new chat session
    npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files sort --watch
    ```
 
+### Library Usage
+
+ai-digest can also be used as a library in your Node.js projects:
+
+```bash
+npm install ai-digest
+```
+
+```javascript
+import aiDigest from 'ai-digest';
+
+// Generate digest content as a string
+const content = await aiDigest.generateDigest({
+  inputDir: './src',
+  outputFile: null,  // Return as string instead of writing to file
+  silent: true       // Suppress console output
+});
+
+// Or save directly to a file
+await aiDigest.generateDigest({
+  inputDir: './src',
+  outputFile: 'codebase.md',
+  removeWhitespaceFlag: true,
+  showOutputFiles: 'sort'
+});
+```
+
+**Available functions:**
+- `generateDigest(options)` - Main function for generating digests
+- `generateDigestContent(options)` - Lower-level function that returns content and stats
+- `writeDigestToFile(content, outputFile, stats)` - Write digest content to a file
+
 ## Custom Ignore Patterns
 
 ai-digest supports custom ignore patterns using a `.aidigestignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
