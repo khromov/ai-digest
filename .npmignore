@@ -1,0 +1,15 @@
+# Exclude Claude Code instructions
+CLAUDE.md
+
+# Exclude test files and directories
+test/
+test-library-mode/
+*.test.ts
+
+# Exclude configuration files
+jest.config.js
+tsconfig.json
+.claude
+.aidigestignore
+.github
+.nvmrc
