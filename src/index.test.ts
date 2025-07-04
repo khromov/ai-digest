@@ -19,7 +19,10 @@ const runCLI = async (args: string = "") => {
 };
 
 // New helper to run CLI with specific environment variables
-const runCLIWithEnv = async (args: string = "", env: Record<string, string> = {}) => {
+const runCLIWithEnv = async (
+  args: string = "",
+  env: Record<string, string> = {},
+) => {
   const cliPath = path.resolve(__dirname, "index.ts");
   const envVars = Object.entries(env)
     .map(([key, value]) => `${key}="${value}"`)
@@ -46,7 +49,7 @@ describe("AI Digest CLI", () => {
   it("should respect custom output file", async () => {
     const { stdout } = await runCLI("-o custom_output.md");
     expect(stdout).toMatch(
-      /Files aggregated successfully into .*custom_output\.md/
+      /Files aggregated successfully into .*custom_output\.md/,
     );
   }, 10000);
 
@@ -63,7 +66,7 @@ describe("AI Digest CLI", () => {
   it("should not remove whitespace for whitespace-dependent files", async () => {
     const { stdout } = await runCLI("--whitespace-removal");
     expect(stdout).toContain(
-      "Whitespace removal enabled (except for whitespace-dependent languages)"
+      "Whitespace removal enabled (except for whitespace-dependent languages)",
     );
   }, 10000);
 
@@ -100,7 +103,7 @@ describe("AI Digest CLI", () => {
       await fs.writeFile(path.join(tempDir, "test1.txt"), "Test content 1");
       await fs.writeFile(
         path.join(tempDir, "test2.js"),
-        'console.log("Test content 2");'
+        'console.log("Test content 2");',
       );
 
       // Create a subdirectory with a file
@@ -108,7 +111,7 @@ describe("AI Digest CLI", () => {
       await fs.mkdir(subDir);
       await fs.writeFile(
         path.join(subDir, "test3.py"),
-        'print("Test content 3")'
+        'print("Test content 3")',
       );
 
       // Run the CLI with the --input flag
@@ -143,18 +146,18 @@ describe("AI Digest CLI", () => {
   it("should respect custom ignore file", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-")
+      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-"),
     );
 
     try {
       // Create some test files in the temporary directory
       await fs.writeFile(
         path.join(tempDir, "include.txt"),
-        "This file should be included"
+        "This file should be included",
       );
       await fs.writeFile(
         path.join(tempDir, "exclude.js"),
-        "This file should be excluded"
+        "This file should be excluded",
       );
 
       // Create a custom ignore file
@@ -162,7 +165,7 @@ describe("AI Digest CLI", () => {
 
       // Run the CLI with the custom ignore file
       const { stdout } = await runCLI(
-        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`
+        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`,
       );
 
       // Check if the output contains only the files we want to include
@@ -191,7 +194,7 @@ describe("AI Digest CLI", () => {
   it("should sort files in natural path order", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-sort-test-")
+      path.join(os.tmpdir(), "ai-digest-sort-test-"),
     );
 
     try {
@@ -202,19 +205,19 @@ describe("AI Digest CLI", () => {
 
       await fs.writeFile(
         path.join(tempDir, "01-first", "01-file.txt"),
-        "First file"
+        "First file",
       );
       await fs.writeFile(
         path.join(tempDir, "01-first", "02-file.txt"),
-        "Second file"
+        "Second file",
       );
       await fs.writeFile(
         path.join(tempDir, "02-second", "01-file.txt"),
-        "Third file"
+        "Third file",
       );
       await fs.writeFile(
         path.join(tempDir, "10-tenth", "01-file.txt"),
-        "Fourth file"
+        "Fourth file",
       );
       await fs.writeFile(path.join(tempDir, "root-file.txt"), "Root file");
 
@@ -270,36 +273,36 @@ describe("AI Digest CLI", () => {
   it("should handle multiple input directories", async () => {
     // Create two temporary directories
     const tempDir1 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir1-")
+      path.join(os.tmpdir(), "ai-digest-test-dir1-"),
     );
     const tempDir2 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir2-")
+      path.join(os.tmpdir(), "ai-digest-test-dir2-"),
     );
 
     try {
       // Create test files in first directory
       await fs.writeFile(
         path.join(tempDir1, "dir1-file1.txt"),
-        "Content from dir1"
+        "Content from dir1",
       );
       await fs.writeFile(
         path.join(tempDir1, "common.txt"),
-        "Common file in dir1"
+        "Common file in dir1",
       );
 
       // Create test files in second directory
       await fs.writeFile(
         path.join(tempDir2, "dir2-file1.txt"),
-        "Content from dir2"
+        "Content from dir2",
       );
       await fs.writeFile(
         path.join(tempDir2, "common.txt"),
-        "Common file in dir2"
+        "Common file in dir2",
       );
 
       // Run CLI with multiple input directories
       const { stdout } = await runCLI(
-        `--input ${tempDir1} ${tempDir2} --show-output-files`
+        `--input ${tempDir1} ${tempDir2} --show-output-files`,
       );
 
       // Verify output
@@ -337,37 +340,41 @@ describe("AI Digest CLI", () => {
   // New test for working directory behavior
   it("should respect INIT_CWD when different from process.cwd()", async () => {
     // Create a temporary directory structure
-    const tempRootDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-wd-test-"));
+    const tempRootDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-wd-test-"),
+    );
     const subDir = path.join(tempRootDir, "subdir");
     await fs.mkdir(subDir);
-    
+
     // Create test files
-    await fs.writeFile(path.join(tempRootDir, "root-file.txt"), "Root file content");
-    
+    await fs.writeFile(
+      path.join(tempRootDir, "root-file.txt"),
+      "Root file content",
+    );
+
     try {
       // Run with INIT_CWD set to subdirectory but cwd unchanged
       const env = { INIT_CWD: subDir };
-      
+
       // Use the tempRootDir as input to have files to process
       await runCLIWithEnv(`--input ${tempRootDir}`, env);
-      
+
       // Verify the file was created in the subdirectory (INIT_CWD)
       const subDirOutputPath = path.join(subDir, "codebase.md");
       const fileExists = await fs
         .access(subDirOutputPath)
         .then(() => true)
         .catch(() => false);
-      
+
       expect(fileExists).toBe(true);
-      
+
       // Verify content includes the root file
       const content = await fs.readFile(subDirOutputPath, "utf-8");
       expect(content).toContain("root-file.txt");
       expect(content).toContain("Root file content");
-      
+
       // Clean up the output file
       await fs.unlink(subDirOutputPath).catch(() => {});
-      
     } finally {
       // Clean up the test directories
       await fs.rm(tempRootDir, { recursive: true, force: true });
@@ -387,7 +394,7 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
     await fs.writeFile(
       path.join(tempDir, "file2.js"),
-      'console.log("Test content 2");'
+      'console.log("Test content 2");',
     );
 
     // Create a subdirectory with a file
@@ -395,7 +402,7 @@ describe("AI Digest Library API", () => {
     await fs.mkdir(subDir);
     await fs.writeFile(
       path.join(subDir, "file3.py"),
-      'print("Test content 3")'
+      'print("Test content 3")',
     );
   });
 
@@ -473,7 +480,7 @@ describe("AI Digest Library API", () => {
     // Create a file with whitespace
     await fs.writeFile(
       path.join(tempDir, "whitespace.js"),
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
     );
 
     // With whitespace removal
@@ -494,11 +501,11 @@ describe("AI Digest Library API", () => {
 
     // With whitespace removal, the string should be more compact
     expect(contentWithRemoval).toContain(
-      'function test() { console.log("multiple spaces"); }'
+      'function test() { console.log("multiple spaces"); }',
     );
     // Without whitespace removal, the original spacing should be preserved
     expect(contentWithoutRemoval).toContain(
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
     );
   });
 
@@ -544,7 +551,7 @@ describe("AI Digest Library API", () => {
 
     // Verify console output was generated
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Files aggregated successfully")
+      expect.stringContaining("Files aggregated successfully"),
     );
 
     // Clean up

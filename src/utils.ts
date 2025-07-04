@@ -117,7 +117,7 @@ export function escapeTripleBackticks(content: string): string {
 export function createIgnoreFilter(
   ignorePatterns: string[],
   ignoreFile: string,
-  silent: boolean = false
+  silent: boolean = false,
 ): ReturnType<typeof ignore> {
   const ig = require("ignore")().add(ignorePatterns);
   if (!silent) {

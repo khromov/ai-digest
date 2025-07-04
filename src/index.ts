@@ -31,14 +31,14 @@ function getActualWorkingDirectory() {
   if (process.env.INIT_CWD) {
     return process.env.INIT_CWD;
   }
-  
+
   return process.cwd();
 }
 
 // Simple debounce function to avoid multiple rebuilds when many files change at once
 function debounce<F extends (...args: any[]) => any>(
   func: F,
-  wait: number
+  wait: number,
 ): (...args: Parameters<F>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -57,7 +57,7 @@ function debounce<F extends (...args: any[]) => any>(
 async function readIgnoreFile(
   inputDir: string,
   filename: string,
-  silent: boolean = false
+  silent: boolean = false,
 ): Promise<string[]> {
   try {
     const filePath = path.join(inputDir, filename);
@@ -72,7 +72,7 @@ async function readIgnoreFile(
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       if (!silent) {
         console.log(
-          formatLog(`No ${filename} file found in ${inputDir}.`, "❓")
+          formatLog(`No ${filename} file found in ${inputDir}.`, "❓"),
         );
       }
       return [];
@@ -90,13 +90,13 @@ function formatFileSize(bytes: number): string {
 function displayIncludedFiles(
   includedFiles: string[],
   fileSizes: Record<string, number>,
-  sortBySize: boolean = false
+  sortBySize: boolean = false,
 ): void {
   console.log(formatLog("Files included in the output:", "📋"));
 
   const totalSize = Object.values(fileSizes).reduce(
     (sum, size) => sum + size,
-    0
+    0,
   );
 
   let displayFiles = [...includedFiles];
@@ -107,7 +107,7 @@ function displayIncludedFiles(
 
   const maxFileNameLength = Math.min(
     60, // Cap at 60 characters to prevent very long lines
-    displayFiles.reduce((max, file) => Math.max(max, file.length), 0)
+    displayFiles.reduce((max, file) => Math.max(max, file.length), 0),
   );
 
   displayFiles.forEach((file, index) => {
@@ -117,7 +117,7 @@ function displayIncludedFiles(
     const bar = "█".repeat(barLength);
 
     console.log(
-      `${(index + 1).toString().padEnd(4)}${file.padEnd(maxFileNameLength + 2)}${formatFileSize(size).padEnd(10)}(${percentage.toFixed(1).padStart(4)}%) ${bar}`
+      `${(index + 1).toString().padEnd(4)}${file.padEnd(maxFileNameLength + 2)}${formatFileSize(size).padEnd(10)}(${percentage.toFixed(1).padStart(4)}%) ${bar}`,
     );
   });
 }
@@ -182,10 +182,9 @@ export async function generateDigestContent(options: {
       customIgnores[dir] = createIgnoreFilter(
         allIgnorePatterns[dir],
         ignoreFile,
-        silent
+        silent,
       );
     }
-
 
     if (!silent) {
       if (useDefaultIgnores) {
@@ -198,8 +197,8 @@ export async function generateDigestContent(options: {
         console.log(
           formatLog(
             "Whitespace removal enabled (except for whitespace-dependent languages).",
-            "🧹"
-          )
+            "🧹",
+          ),
         );
       } else {
         console.log(formatLog("Whitespace removal disabled.", "📝"));
@@ -229,7 +228,7 @@ export async function generateDigestContent(options: {
 
       if (!silent) {
         console.log(
-          formatLog(`Found ${dirFiles.length} files in ${inputDir}`, "🔍")
+          formatLog(`Found ${dirFiles.length} files in ${inputDir}`, "🔍"),
         );
       }
 
@@ -247,8 +246,8 @@ export async function generateDigestContent(options: {
       console.log(
         formatLog(
           `Total files found across all directories: ${allFileEntries.length}`,
-          "🔍"
-        )
+          "🔍",
+        ),
       );
     }
 
@@ -333,9 +332,9 @@ export async function generateDigestContent(options: {
     if (fileSizeInBytes <= MAX_FILE_SIZE) {
       const tokenCounts = estimateTokenCount(output);
       // Use GPT tokens as the default for backward compatibility
-      if (typeof tokenCounts === 'object' && tokenCounts.gptTokens) {
+      if (typeof tokenCounts === "object" && tokenCounts.gptTokens) {
         estimatedTokens = tokenCounts.gptTokens;
-      } else if (typeof tokenCounts === 'number') {
+      } else if (typeof tokenCounts === "number") {
         estimatedTokens = tokenCounts;
       }
     }
@@ -376,13 +375,13 @@ export async function writeDigestToFile(
     fileSizeInBytes: number;
   },
   showOutputFiles: string | boolean = false,
-  fileSizes?: Record<string, number>
+  fileSizes?: Record<string, number>,
 ): Promise<void> {
   try {
     const outputPath = path.isAbsolute(outputFile)
       ? outputFile
       : path.join(getActualWorkingDirectory(), outputFile);
-    
+
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
 
     // Write to a temporary file first to prevent partial writes during SIGINT
@@ -403,19 +402,19 @@ export async function writeDigestToFile(
     await fs.rename(tempFile, outputPath);
 
     console.log(
-      formatLog(`Files aggregated successfully into ${outputFile}`, "✅")
+      formatLog(`Files aggregated successfully into ${outputFile}`, "✅"),
     );
     console.log(formatLog(`Total files found: ${stats.totalFiles}`, "📚"));
     console.log(
-      formatLog(`Files included in output: ${stats.includedCount}`, "📎")
+      formatLog(`Files included in output: ${stats.includedCount}`, "📎"),
     );
 
     if (stats.defaultIgnoredCount > 0) {
       console.log(
         formatLog(
           `Files ignored by default patterns: ${stats.defaultIgnoredCount}`,
-          "🚫"
-        )
+          "🚫",
+        ),
       );
     }
 
@@ -423,55 +422,59 @@ export async function writeDigestToFile(
       console.log(
         formatLog(
           `Files ignored by .aidigestignore: ${stats.customIgnoredCount}`,
-          "🚫"
-        )
+          "🚫",
+        ),
       );
     }
 
     console.log(
       formatLog(
         `Binary and SVG files included: ${stats.binaryAndSvgFileCount}`,
-        "📦"
-      )
+        "📦",
+      ),
     );
 
     if (stats.fileSizeInBytes > MAX_FILE_SIZE) {
       console.log(
         formatLog(
           `Warning: Output file size (${(stats.fileSizeInBytes / 1024 / 1024).toFixed(2)} MB) exceeds 10 MB.`,
-          "⚠️"
-        )
+          "⚠️",
+        ),
       );
       console.log(
         formatLog(
           "Token count estimation skipped due to large file size.",
-          "⚠️"
-        )
+          "⚠️",
+        ),
       );
       console.log(
         formatLog(
           "Consider adding more files to .aidigestignore to reduce the output size.",
-          "💡"
-        )
+          "💡",
+        ),
       );
     } else {
       const tokenCounts = estimateTokenCount(content);
-      if (typeof tokenCounts === 'object' && tokenCounts.gptTokens && tokenCounts.claudeTokens) {
+      if (
+        typeof tokenCounts === "object" &&
+        tokenCounts.gptTokens &&
+        tokenCounts.claudeTokens
+      ) {
         console.log(
           formatLog(
             `Estimated token counts - Claude models: ${tokenCounts.claudeTokens} tokens, GPT-4: ${tokenCounts.gptTokens} tokens`,
-            "🔢"
-          )
+            "🔢",
+          ),
         );
       } else {
         console.log(
-          formatLog(`Estimated token count: ${stats.estimatedTokens}`, "🔢")
+          formatLog(`Estimated token count: ${stats.estimatedTokens}`, "🔢"),
         );
         console.log(
           formatLog(
             "Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.",
-            "⚠️"
-          )
+            "⚠️",
+          ),
         );
       }
     }
@@ -497,7 +500,7 @@ async function watchFiles(
   removeWhitespaceFlag: boolean,
   showOutputFiles: string | boolean,
   ignoreFile: string,
-  testMode: boolean = false
+  testMode: boolean = false,
 ): Promise<void> {
   try {
     // First, run the initial aggregation
@@ -508,12 +511,12 @@ async function watchFiles(
       useDefaultIgnores,
       removeWhitespaceFlag,
       showOutputFiles,
-      ignoreFile
+      ignoreFile,
     );
     isWritingFile = false;
 
     console.log(
-      formatLog("Watch mode enabled. Waiting for file changes...", "👀")
+      formatLog("Watch mode enabled. Waiting for file changes...", "👀"),
     );
 
     // Exit early if in test mode to prevent hanging test
@@ -524,7 +527,11 @@ async function watchFiles(
     // Read ignore patterns for each input directory
     const allIgnorePatterns: Record<string, string[]> = {};
     for (const inputDir of inputDirs) {
-      allIgnorePatterns[inputDir] = await readIgnoreFile(inputDir, ignoreFile, true);
+      allIgnorePatterns[inputDir] = await readIgnoreFile(
+        inputDir,
+        ignoreFile,
+        true,
+      );
     }
 
     const defaultIgnore = useDefaultIgnores
@@ -537,7 +544,7 @@ async function watchFiles(
       customIgnores[inputDir] = createIgnoreFilter(
         allIgnorePatterns[inputDir],
         ignoreFile,
-        true
+        true,
       );
     }
 
@@ -601,11 +608,11 @@ async function watchFiles(
           useDefaultIgnores,
           removeWhitespaceFlag,
           showOutputFiles,
-          ignoreFile
+          ignoreFile,
         );
         isWritingFile = false;
         console.log(
-          formatLog("Rebuild complete. Waiting for more changes...", "✅")
+          formatLog("Rebuild complete. Waiting for more changes...", "✅"),
         );
       } catch (error) {
         isWritingFile = false;
@@ -635,7 +642,7 @@ async function watchFiles(
         if (!shouldIgnorePath(filePath)) {
           const relativePath = path.relative(inputDir, filePath);
           console.log(
-            formatLog(`${event}: ${relativePath} in ${inputDir}`, "🔄")
+            formatLog(`${event}: ${relativePath} in ${inputDir}`, "🔄"),
           );
           debouncedRebuild();
         }
@@ -667,8 +674,8 @@ async function watchFiles(
             console.log(
               formatLog(
                 `${ignoreFile} in ${inputDir} changed, updating ignore patterns...`,
-                "📄"
-              )
+                "📄",
+              ),
             );
             debouncedRebuild();
           });
@@ -678,7 +685,7 @@ async function watchFiles(
       } catch (error) {
         console.error(
           formatLog(`Error watching ${ignoreFile} in ${inputDir}:`, "❌"),
-          error
+          error,
         );
       }
     }
@@ -687,7 +694,7 @@ async function watchFiles(
     process.on("SIGINT", () => {
       if (isWritingFile) {
         console.log(
-          formatLog("Write in progress, waiting to complete...", "⏳")
+          formatLog("Write in progress, waiting to complete...", "⏳"),
         );
 
         // Set up a maximum wait time of 2 seconds
@@ -702,7 +709,7 @@ async function watchFiles(
             clearTimeout(forceExitTimeout);
             clearInterval(checkInterval);
             console.log(
-              formatLog("Write complete. Watch mode terminated.", "👋")
+              formatLog("Write complete. Watch mode terminated.", "👋"),
             );
             process.exit(0);
           }
@@ -728,7 +735,7 @@ async function aggregateFiles(
   useDefaultIgnores: boolean,
   removeWhitespaceFlag: boolean,
   showOutputFiles: string | boolean,
-  ignoreFile: string
+  ignoreFile: string,
 ): Promise<void> {
   try {
     const { content, stats } = await generateDigestContent({
@@ -752,10 +759,8 @@ async function aggregateFiles(
       for (const file of dirFiles) {
         const fullPath = path.join(inputDir, file);
         const displayPath =
-          inputDirs.length > 1
-            ? `${path.basename(inputDir)}/${file}`
-            : file;
-        
+          inputDirs.length > 1 ? `${path.basename(inputDir)}/${file}` : file;
+
         try {
           const fileStats = await fs.stat(fullPath);
           fileSizes[displayPath] = fileStats.size;
@@ -765,7 +770,13 @@ async function aggregateFiles(
       }
     }
 
-    await writeDigestToFile(content, outputFile, stats, showOutputFiles, fileSizes);
+    await writeDigestToFile(
+      content,
+      outputFile,
+      stats,
+      showOutputFiles,
+      fileSizes,
+    );
   } catch (error) {
     console.error(formatLog("Error aggregating files:", "❌"), error);
     process.exit(1);
@@ -783,7 +794,7 @@ export async function generateDigest(
     ignoreFile?: string;
     showOutputFiles?: boolean | string;
     silent?: boolean;
-  } = {}
+  } = {},
 ): Promise<string | void> {
   const {
     inputDir,
@@ -797,7 +808,9 @@ export async function generateDigest(
   } = options;
 
   // Support both single inputDir and multiple inputDirs
-  const directories = inputDirs || (inputDir ? [path.resolve(inputDir)] : [getActualWorkingDirectory()]);
+  const directories =
+    inputDirs ||
+    (inputDir ? [path.resolve(inputDir)] : [getActualWorkingDirectory()]);
 
   const resolvedOutputFile =
     outputFile === null
@@ -837,16 +850,20 @@ if (require.main === module) {
     .option(
       "-i, --input <directories...>",
       "Input directories (multiple allowed)",
-      [getActualWorkingDirectory()]
+      [getActualWorkingDirectory()],
     )
     .option("-o, --output <file>", "Output file name", "codebase.md")
     .option("--no-default-ignores", "Disable default ignore patterns")
     .option("--whitespace-removal", "Enable whitespace removal")
     .option(
       "--show-output-files [sort]",
-      "Display a list of files included in the output, optionally sorted by size ('sort')"
+      "Display a list of files included in the output, optionally sorted by size ('sort')",
     )
-    .option("--ignore-file <file>", "Custom ignore file name", ".aidigestignore")
+    .option(
+      "--ignore-file <file>",
+      "Custom ignore file name",
+      ".aidigestignore",
+    )
     .option("--watch", "Watch for file changes and rebuild automatically")
     .action(async (options) => {
       const inputDirs = options.input.map((dir: string) => path.resolve(dir));
@@ -863,7 +880,7 @@ if (require.main === module) {
           options.whitespaceRemoval,
           options.showOutputFiles,
           options.ignoreFile,
-          process.env.NODE_ENV === "test" // Pass test mode flag based on environment
+          process.env.NODE_ENV === "test", // Pass test mode flag based on environment
         );
       } else {
         // Run once
@@ -873,7 +890,7 @@ if (require.main === module) {
           options.defaultIgnores,
           options.whitespaceRemoval,
           options.showOutputFiles,
-          options.ignoreFile
+          options.ignoreFile,
         );
       }
     });
