@@ -4,6 +4,13 @@ import path from "path";
 import fs from "fs/promises";
 import os from "os";
 
+// Import the library functions for direct testing
+import aiDigest, {
+  generateDigest,
+  generateDigestContent,
+  writeDigestToFile,
+} from "./index";
+
 const execAsync = promisify(exec);
 
 const runCLI = async (args: string = "") => {
@@ -12,7 +19,10 @@ const runCLI = async (args: string = "") => {
 };
 
 // New helper to run CLI with specific environment variables
-const runCLIWithEnv = async (args: string = "", env: Record<string, string> = {}) => {
+const runCLIWithEnv = async (
+  args: string = "",
+  env: Record<string, string> = {},
+) => {
   const cliPath = path.resolve(__dirname, "index.ts");
   const envVars = Object.entries(env)
     .map(([key, value]) => `${key}="${value}"`)
@@ -39,7 +49,7 @@ describe("AI Digest CLI", () => {
   it("should respect custom output file", async () => {
     const { stdout } = await runCLI("-o custom_output.md");
     expect(stdout).toMatch(
-      /Files aggregated successfully into .*custom_output\.md/
+      /Files aggregated successfully into .*custom_output\.md/,
     );
   }, 10000);
 
@@ -56,7 +66,7 @@ describe("AI Digest CLI", () => {
   it("should not remove whitespace for whitespace-dependent files", async () => {
     const { stdout } = await runCLI("--whitespace-removal");
     expect(stdout).toContain(
-      "Whitespace removal enabled (except for whitespace-dependent languages)"
+      "Whitespace removal enabled (except for whitespace-dependent languages)",
     );
   }, 10000);
 
@@ -93,7 +103,7 @@ describe("AI Digest CLI", () => {
       await fs.writeFile(path.join(tempDir, "test1.txt"), "Test content 1");
       await fs.writeFile(
         path.join(tempDir, "test2.js"),
-        'console.log("Test content 2");'
+        'console.log("Test content 2");',
       );
 
       // Create a subdirectory with a file
@@ -101,7 +111,7 @@ describe("AI Digest CLI", () => {
       await fs.mkdir(subDir);
       await fs.writeFile(
         path.join(subDir, "test3.py"),
-        'print("Test content 3")'
+        'print("Test content 3")',
       );
 
       // Run the CLI with the --input flag
@@ -136,18 +146,18 @@ describe("AI Digest CLI", () => {
   it("should respect custom ignore file", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-")
+      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-"),
     );
 
     try {
       // Create some test files in the temporary directory
       await fs.writeFile(
         path.join(tempDir, "include.txt"),
-        "This file should be included"
+        "This file should be included",
       );
       await fs.writeFile(
         path.join(tempDir, "exclude.js"),
-        "This file should be excluded"
+        "This file should be excluded",
       );
 
       // Create a custom ignore file
@@ -155,7 +165,7 @@ describe("AI Digest CLI", () => {
 
       // Run the CLI with the custom ignore file
       const { stdout } = await runCLI(
-        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`
+        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`,
       );
 
       // Check if the output contains only the files we want to include
@@ -184,7 +194,7 @@ describe("AI Digest CLI", () => {
   it("should sort files in natural path order", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-sort-test-")
+      path.join(os.tmpdir(), "ai-digest-sort-test-"),
     );
 
     try {
@@ -195,19 +205,19 @@ describe("AI Digest CLI", () => {
 
       await fs.writeFile(
         path.join(tempDir, "01-first", "01-file.txt"),
-        "First file"
+        "First file",
       );
       await fs.writeFile(
         path.join(tempDir, "01-first", "02-file.txt"),
-        "Second file"
+        "Second file",
       );
       await fs.writeFile(
         path.join(tempDir, "02-second", "01-file.txt"),
-        "Third file"
+        "Third file",
       );
       await fs.writeFile(
         path.join(tempDir, "10-tenth", "01-file.txt"),
-        "Fourth file"
+        "Fourth file",
       );
       await fs.writeFile(path.join(tempDir, "root-file.txt"), "Root file");
 
@@ -217,8 +227,6 @@ describe("AI Digest CLI", () => {
       // Read the generated codebase.md file
       const codebasePath = path.resolve(process.cwd(), "codebase.md");
       const content = await fs.readFile(codebasePath, "utf-8");
-
-      console.log(content); // Print the content for debugging
 
       // Define the expected order of file headers
       const expectedOrder = [
@@ -265,36 +273,36 @@ describe("AI Digest CLI", () => {
   it("should handle multiple input directories", async () => {
     // Create two temporary directories
     const tempDir1 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir1-")
+      path.join(os.tmpdir(), "ai-digest-test-dir1-"),
     );
     const tempDir2 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir2-")
+      path.join(os.tmpdir(), "ai-digest-test-dir2-"),
     );
 
     try {
       // Create test files in first directory
       await fs.writeFile(
         path.join(tempDir1, "dir1-file1.txt"),
-        "Content from dir1"
+        "Content from dir1",
       );
       await fs.writeFile(
         path.join(tempDir1, "common.txt"),
-        "Common file in dir1"
+        "Common file in dir1",
       );
 
       // Create test files in second directory
       await fs.writeFile(
         path.join(tempDir2, "dir2-file1.txt"),
-        "Content from dir2"
+        "Content from dir2",
       );
       await fs.writeFile(
         path.join(tempDir2, "common.txt"),
-        "Common file in dir2"
+        "Common file in dir2",
       );
 
       // Run CLI with multiple input directories
       const { stdout } = await runCLI(
-        `--input ${tempDir1} ${tempDir2} --show-output-files`
+        `--input ${tempDir1} ${tempDir2} --show-output-files`,
       );
 
       // Verify output
@@ -332,40 +340,237 @@ describe("AI Digest CLI", () => {
   // New test for working directory behavior
   it("should respect INIT_CWD when different from process.cwd()", async () => {
     // Create a temporary directory structure
-    const tempRootDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-wd-test-"));
+    const tempRootDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-wd-test-"),
+    );
     const subDir = path.join(tempRootDir, "subdir");
     await fs.mkdir(subDir);
-    
+
     // Create test files
-    await fs.writeFile(path.join(tempRootDir, "root-file.txt"), "Root file content");
-    
+    await fs.writeFile(
+      path.join(tempRootDir, "root-file.txt"),
+      "Root file content",
+    );
+
     try {
       // Run with INIT_CWD set to subdirectory but cwd unchanged
       const env = { INIT_CWD: subDir };
-      
+
       // Use the tempRootDir as input to have files to process
-      const { stdout } = await runCLIWithEnv(`--input ${tempRootDir}`, env);
-      
+      await runCLIWithEnv(`--input ${tempRootDir}`, env);
+
       // Verify the file was created in the subdirectory (INIT_CWD)
       const subDirOutputPath = path.join(subDir, "codebase.md");
       const fileExists = await fs
         .access(subDirOutputPath)
         .then(() => true)
         .catch(() => false);
-      
+
       expect(fileExists).toBe(true);
-      
+
       // Verify content includes the root file
       const content = await fs.readFile(subDirOutputPath, "utf-8");
       expect(content).toContain("root-file.txt");
       expect(content).toContain("Root file content");
-      
+
       // Clean up the output file
       await fs.unlink(subDirOutputPath).catch(() => {});
-      
     } finally {
       // Clean up the test directories
       await fs.rm(tempRootDir, { recursive: true, force: true });
     }
   }, 15000);
+});
+
+// New tests for library functionality
+describe("AI Digest Library API", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    // Create a temporary directory for each test
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-lib-test-"));
+
+    // Create some test files
+    await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
+    await fs.writeFile(
+      path.join(tempDir, "file2.js"),
+      'console.log("Test content 2");',
+    );
+
+    // Create a subdirectory with a file
+    const subDir = path.join(tempDir, "subdir");
+    await fs.mkdir(subDir);
+    await fs.writeFile(
+      path.join(subDir, "file3.py"),
+      'print("Test content 3")',
+    );
+  });
+
+  afterEach(async () => {
+    // Clean up temporary directory after each test
+    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+  });
+
+  it("should be importable as a module", () => {
+    expect(aiDigest).toBeDefined();
+    expect(generateDigest).toBeDefined();
+    expect(generateDigestContent).toBeDefined();
+    expect(writeDigestToFile).toBeDefined();
+  });
+
+  it("should generate digest content as a string when outputFile is null", async () => {
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      silent: true,
+    });
+
+    expect(typeof content).toBe("string");
+
+    // Check that all test files are included in the content
+    expect(content).toContain("# file1.txt");
+    expect(content).toContain("Test content 1");
+    expect(content).toContain("# file2.js");
+    expect(content).toContain('console.log("Test content 2");');
+    expect(content).toContain("# subdir/file3.py");
+    expect(content).toContain('print("Test content 3")');
+  });
+
+  it("should write to specified output file when outputFile is provided", async () => {
+    const outputPath = path.join(tempDir, "output-digest.md");
+
+    await generateDigest({
+      inputDir: tempDir,
+      outputFile: outputPath,
+      silent: true,
+    });
+
+    // Verify the file was created
+    const fileExists = await fs
+      .access(outputPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(fileExists).toBe(true);
+
+    // Check content
+    const content = await fs.readFile(outputPath, "utf-8");
+    expect(content).toContain("# file1.txt");
+    expect(content).toContain("Test content 1");
+  });
+
+  it("should use lower-level generateDigestContent function directly", async () => {
+    const { content, stats } = await generateDigestContent({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    expect(typeof content).toBe("string");
+    expect(stats).toMatchObject({
+      totalFiles: 3,
+      includedCount: 3,
+      includedFiles: expect.arrayContaining([
+        "file1.txt",
+        "file2.js",
+        "subdir/file3.py",
+      ]),
+    });
+  });
+
+  it("should respect whitespace removal option", async () => {
+    // Create a file with whitespace
+    await fs.writeFile(
+      path.join(tempDir, "whitespace.js"),
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+    );
+
+    // With whitespace removal
+    const contentWithRemoval = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      removeWhitespaceFlag: true,
+      silent: true,
+    });
+
+    // Without whitespace removal
+    const contentWithoutRemoval = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      removeWhitespaceFlag: false,
+      silent: true,
+    });
+
+    // With whitespace removal, the string should be more compact
+    expect(contentWithRemoval).toContain(
+      'function test() { console.log("multiple spaces"); }',
+    );
+    // Without whitespace removal, the original spacing should be preserved
+    expect(contentWithoutRemoval).toContain(
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+    );
+  });
+
+  it("should respect ignore patterns", async () => {
+    // Create an ignore file
+    await fs.writeFile(path.join(tempDir, ".aidigestignore"), "*.js");
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      silent: true,
+    });
+
+    // JS file should be ignored
+    expect(content).not.toContain("# file2.js");
+    // Other files should be included
+    expect(content).toContain("# file1.txt");
+    expect(content).toContain("# subdir/file3.py");
+  });
+
+  it("should work with default export", async () => {
+    const content = await aiDigest.generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      silent: true,
+    });
+
+    expect(typeof content).toBe("string");
+    expect(content).toContain("# file1.txt");
+  });
+
+  it("should write digest to file and capture console output", async () => {
+    // Spy on console.log
+    const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+    const { content, stats } = await generateDigestContent({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    const outputPath = path.join(tempDir, "console-test.md");
+    await writeDigestToFile(content, outputPath, stats);
+
+    // Verify console output was generated
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Files aggregated successfully"),
+    );
+
+    // Clean up
+    consoleLogSpy.mockRestore();
+  });
+
+  it("should not generate console output in silent mode", async () => {
+    // Spy on console.log
+    const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+    await generateDigestContent({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    // No console output should be generated in silent mode
+    expect(consoleLogSpy).not.toHaveBeenCalled();
+
+    // Clean up
+    consoleLogSpy.mockRestore();
+  });
 });

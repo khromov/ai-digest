@@ -116,16 +116,19 @@ export function escapeTripleBackticks(content: string): string {
 
 export function createIgnoreFilter(
   ignorePatterns: string[],
-  ignoreFile: string
+  ignoreFile: string,
+  silent: boolean = false,
 ): ReturnType<typeof ignore> {
   const ig = require("ignore")().add(ignorePatterns);
-  if (ignorePatterns.length > 0) {
-    console.log(`Ignore patterns from ${ignoreFile}:`);
-    ignorePatterns.forEach((pattern) => {
-      console.log(`  - ${pattern}`);
-    });
-  } else {
-    console.log("No custom ignore patterns found.");
+  if (!silent) {
+    if (ignorePatterns.length > 0) {
+      console.log(`Ignore patterns from ${ignoreFile}:`);
+      ignorePatterns.forEach((pattern) => {
+        console.log(`  - ${pattern}`);
+      });
+    } else {
+      console.log("No custom ignore patterns found.");
+    }
   }
   return ig;
 }
