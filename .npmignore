@@ -13,3 +13,5 @@ tsconfig.json
 .aidigestignore
 .github
 .nvmrc
+codebase.md
+*.snap
