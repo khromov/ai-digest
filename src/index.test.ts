@@ -789,8 +789,8 @@ describe("AI Digest Library API", () => {
     expect(mascotFile).toBeDefined();
     expect(mascotFile!.path).toBe("mascot.jpg");
 
-    // Verify the file size matches actual binary file size (10732 bytes)
-    expect(mascotFile!.sizeInBytes).toBe(10732);
+    // Verify the file size matches processed text content size (56 bytes for "# mascot.jpg\n\nThis is a binary file of the type: Image\n\n")
+    expect(mascotFile!.sizeInBytes).toBe(56);
 
     // Verify that only path and sizeInBytes are present (no token counts per file)
     expect(mascotFile!).toHaveProperty("path");

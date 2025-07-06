@@ -154,7 +154,6 @@ export async function processFiles(options: {
     binaryAndSvgFileCount: number;
     includedFiles: string[];
     fileSizeInBytes: number;
-    originalFileSizes: Record<string, number>;
   };
 }> {
   const {
@@ -354,7 +353,6 @@ export async function processFiles(options: {
         binaryAndSvgFileCount,
         includedFiles,
         fileSizeInBytes: totalContentSize,
-        originalFileSizes: fileSizes,
       },
     };
   } catch (error) {
@@ -1048,7 +1046,7 @@ export async function getFileStats(
         : path.join(getActualWorkingDirectory(), outputFile);
 
   // Process files to get the content
-  const { files, stats } = await processFiles({
+  const { files } = await processFiles({
     inputDirs: directories,
     outputFilePath: resolvedOutputFile,
     useDefaultIgnores,
@@ -1080,7 +1078,7 @@ export async function getFileStats(
 
     return {
       path: file.fileName,
-      sizeInBytes: stats.originalFileSizes[file.fileName] || Buffer.byteLength(file.content),
+      sizeInBytes: Buffer.byteLength(file.content),
     };
   });
 
