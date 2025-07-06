@@ -374,6 +374,7 @@ export async function generateDigestContent(options: {
   silent?: boolean;
 }): Promise<{
   content: string;
+  files: ProcessedFile[];
   stats: {
     totalFiles: number;
     includedCount: number;
@@ -407,6 +408,7 @@ export async function generateDigestContent(options: {
 
     return {
       content: output,
+      files,
       stats: {
         ...stats,
         estimatedTokens,
@@ -799,7 +801,7 @@ async function aggregateFiles(
   ignoreFile: string,
 ): Promise<void> {
   try {
-    const { content, stats } = await generateDigestContent({
+    const { content, files, stats } = await generateDigestContent({
       inputDirs,
       outputFilePath: outputFile,
       useDefaultIgnores,
@@ -808,28 +810,11 @@ async function aggregateFiles(
       silent: false,
     });
 
-    // Collect file sizes from all directories for display
+    // Create file sizes mapping from processed content sizes
     const fileSizes: Record<string, number> = {};
-    for (const inputDir of inputDirs) {
-      const dirFiles = await glob("**/*", {
-        nodir: true,
-        dot: true,
-        cwd: inputDir,
-      });
-
-      for (const file of dirFiles) {
-        const fullPath = path.join(inputDir, file);
-        const displayPath =
-          inputDirs.length > 1 ? `${path.basename(inputDir)}/${file}` : file;
-
-        try {
-          const fileStats = await fs.stat(fullPath);
-          fileSizes[displayPath] = fileStats.size;
-        } catch (error) {
-          // Ignore stat errors
-        }
-      }
-    }
+    files.forEach((file) => {
+      fileSizes[file.fileName] = Buffer.byteLength(file.content);
+    });
 
     await writeDigestToFile(
       content,
@@ -1058,7 +1043,7 @@ export async function getFileStats(
   // Calculate token counts and build result array
   let totalGptTokens = 0;
   let totalClaudeTokens = 0;
-  
+
   const fileStats = files.map((file) => {
     const tokenCounts = estimateTokenCount(file.content);
     const gptTokens =
@@ -1085,7 +1070,7 @@ export async function getFileStats(
   // Sort by size (largest first)
   fileStats.sort((a, b) => b.sizeInBytes - a.sizeInBytes);
 
-  return { 
+  return {
     files: fileStats,
     totalGptTokens,
     totalClaudeTokens,
