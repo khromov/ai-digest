@@ -1,0 +1,44 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AI Digest Library API should return file statistics sorted by size with getFileStats 1`] = `
+{
+  "files": [
+    {
+      "claudeTokens": 212,
+      "gptTokens": 189,
+      "path": "large.md",
+      "sizeInBytes": 884,
+    },
+    {
+      "claudeTokens": 20,
+      "gptTokens": 16,
+      "path": "medium.js",
+      "sizeInBytes": 58,
+    },
+    {
+      "claudeTokens": 21,
+      "gptTokens": 18,
+      "path": "file2.js",
+      "sizeInBytes": 54,
+    },
+    {
+      "claudeTokens": 21,
+      "gptTokens": 19,
+      "path": "subdir/file3.py",
+      "sizeInBytes": 54,
+    },
+    {
+      "claudeTokens": 16,
+      "gptTokens": 15,
+      "path": "file1.txt",
+      "sizeInBytes": 40,
+    },
+    {
+      "claudeTokens": 13,
+      "gptTokens": 11,
+      "path": "small.txt",
+      "sizeInBytes": 30,
+    },
+  ],
+}
+`;

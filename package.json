@@ -15,7 +15,7 @@
     "start": "ts-node src/index.ts",
     "prepublishOnly": "npm run build",
     "test": "jest --config jest.config.js",
-    "prettier": "prettier --write \"src/**/*\""
+    "prettier": "prettier --write \"src/**/*.{js,ts,json}\" \"!src/**/*.snap\""
   },
   "keywords": [
     "cli",

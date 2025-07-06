@@ -771,5 +771,8 @@ describe("AI Digest Library API", () => {
     expect(typeof firstFile.claudeTokens).toBe("number");
     expect(firstFile.gptTokens).toBeGreaterThanOrEqual(0);
     expect(firstFile.claudeTokens).toBeGreaterThanOrEqual(0);
+
+    // Snapshot test the actual output
+    expect(result).toMatchSnapshot();
   });
 });
