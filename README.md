@@ -132,6 +132,21 @@ console.log(files[0].content);   // "# index.ts\n\n```ts\n// file content...\n``
 // Apply custom filtering after processing
 const jsFiles = files.filter(file => file.fileName.endsWith('.js'));
 const customDigest = jsFiles.map(file => file.content).join('');
+
+// Get file statistics without content (useful for analysis)
+const stats = await aiDigest.getFileStats({
+  inputDir: './src',
+  silent: true
+});
+
+// Returns files sorted by size (largest first) with token counts
+console.log(stats.files[0]);
+// {
+//   path: 'large-file.js',
+//   sizeInBytes: 15420,
+//   gptTokens: 3821,
+//   claudeTokens: 4102
+// }
 ```
 
 **Available functions:**
@@ -139,6 +154,7 @@ const customDigest = jsFiles.map(file => file.content).join('');
 - `generateDigestFiles(options)` - Generate digest and return array of individual file objects
 - `generateDigestContent(options)` - Lower-level function that returns content and stats
 - `writeDigestToFile(content, outputFile, stats)` - Write digest content to a file
+- `getFileStats(options)` - Get file statistics (path, size, token counts) sorted by size without content
 
 ## Custom Ignore Patterns
 

@@ -390,7 +390,7 @@ export async function generateDigestContent(options: {
     const { files, stats } = await processFiles(options);
 
     // Concatenate all files into a single output string
-    const output = files.map(file => file.content).join("");
+    const output = files.map((file) => file.content).join("");
 
     const fileSizeInBytes = Buffer.byteLength(output);
     let estimatedTokens = 0;
@@ -1006,6 +1006,83 @@ if (require.main === module) {
   program.parse(process.argv);
 }
 
+// New function to get file statistics
+export async function getFileStats(
+  options: {
+    inputDir?: string;
+    inputDirs?: string[];
+    outputFile?: string | null;
+    useDefaultIgnores?: boolean;
+    ignoreFile?: string;
+    silent?: boolean;
+  } = {},
+): Promise<{
+  files: Array<{
+    path: string;
+    sizeInBytes: number;
+    gptTokens: number;
+    claudeTokens: number;
+  }>;
+}> {
+  const {
+    inputDir,
+    inputDirs,
+    outputFile = null,
+    useDefaultIgnores = true,
+    ignoreFile = ".aidigestignore",
+    silent = true,
+  } = options;
+
+  // Support both single inputDir and multiple inputDirs
+  const directories =
+    inputDirs ||
+    (inputDir ? [path.resolve(inputDir)] : [getActualWorkingDirectory()]);
+
+  const resolvedOutputFile =
+    outputFile === null
+      ? null
+      : path.isAbsolute(outputFile)
+        ? outputFile
+        : path.join(getActualWorkingDirectory(), outputFile);
+
+  // Process files to get the content
+  const { files } = await processFiles({
+    inputDirs: directories,
+    outputFilePath: resolvedOutputFile,
+    useDefaultIgnores,
+    removeWhitespaceFlag: false,
+    ignoreFile,
+    silent,
+  });
+
+  // Calculate token counts for each file and build result array
+  const fileStats = files.map((file) => {
+    const tokenCounts = estimateTokenCount(file.content);
+    const gptTokens =
+      typeof tokenCounts === "object" && tokenCounts.gptTokens
+        ? tokenCounts.gptTokens
+        : typeof tokenCounts === "number"
+          ? tokenCounts
+          : 0;
+    const claudeTokens =
+      typeof tokenCounts === "object" && tokenCounts.claudeTokens
+        ? tokenCounts.claudeTokens
+        : 0;
+
+    return {
+      path: file.fileName,
+      sizeInBytes: Buffer.byteLength(file.content),
+      gptTokens,
+      claudeTokens,
+    };
+  });
+
+  // Sort by size (largest first)
+  fileStats.sort((a, b) => b.sizeInBytes - a.sizeInBytes);
+
+  return { files: fileStats };
+}
+
 // Default export for library usage
 export default {
   generateDigest,
@@ -1013,4 +1090,5 @@ export default {
   generateDigestContent,
   writeDigestToFile,
   processFiles,
+  getFileStats,
 };
