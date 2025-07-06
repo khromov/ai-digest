@@ -9,6 +9,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Single test: `npx jest src/index.test.ts -t "should respect custom output file"` - Run specific test
 - Format: `npm run prettier` - Format code with Prettier
 
+## Version Management
+When adding a new feature or making significant changes:
+1. Bump the version in package.json following semantic versioning:
+   - MAJOR version for incompatible API changes
+   - MINOR version for new functionality in a backward compatible manner (e.g., 1.2.4 → 1.3.0)
+   - PATCH version for backward compatible bug fixes
+2. Run `npm install` to update package-lock.json
+3. Document the new feature/change in CLAUDE.md with version number
+4. Claude should automatically suggest version bumping when a new feature is added (only once per conversation)
+
 ## Project Architecture
 
 This is a CLI tool called "ai-digest" that aggregates files into a single Markdown file for use with AI models. It can be used both as a CLI tool and as a Node.js library.
@@ -23,6 +33,7 @@ This is a CLI tool called "ai-digest" that aggregates files into a single Markdo
 - `generateDigestContent()` - Core function that processes files and returns content + stats
 - `writeDigestToFile()` - Writes digest content to file with stats display
 - `watchFiles()` - Implements file watching for auto-rebuild functionality
+- `getFileStats()` - Returns file statistics (path, size, token counts) sorted by size without content (added in v1.3.0)
 
 ### File Processing Flow
 1. Read ignore patterns from `.aidigestignore` and apply default ignores
@@ -37,6 +48,8 @@ The tool exports functions for programmatic use:
 - `generateDigest(options)` - Returns content string when `outputFile: null`
 - `generateDigestContent(options)` - Lower-level function returning content and stats
 - `writeDigestToFile(content, outputFile, stats)` - File writing utility
+- `generateDigestFiles(options)` - Returns array of processed file objects with content
+- `getFileStats(options)` - Returns file statistics sorted by size (largest first) with token counts but no content
 
 ## Code Style
 - Use 2 spaces for indentation
