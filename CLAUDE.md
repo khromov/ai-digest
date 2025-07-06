@@ -52,10 +52,7 @@ The architecture supports two usage patterns:
 - `watchFiles()` - Implements file watching with debouncing for auto-rebuild
 
 ### File Size Calculation Strategy
-The tool calculates two different file sizes depending on context:
-- **For CLI display (`--show-output-files`)**: Uses processed content size (markdown wrapper + content)
-- **For `getFileStats()` function**: Uses processed content size for consistency
-- **Original file sizes**: Only tracked internally during processing but not exposed in final APIs
+The tool consistently uses processed content size (markdown wrapper + content) for all file size calculations and displays. This ensures consistency between CLI output and library functions.
 
 ### Testing Architecture
 - **CLI Tests**: Use `execAsync` with `ts-node` to test actual CLI behavior
@@ -77,7 +74,6 @@ The tool exports functions for programmatic use:
 - `generateDigestFiles(options)` - Returns `{ files }` array for custom filtering/processing
 - `getFileStats(options)` - Returns file statistics sorted by size with total token counts, no content
 - `writeDigestToFile(content, outputFile, stats, showOutputFiles, fileSizes)` - File writing utility
-- `processFiles(options)` - Low-level processing function returning files and stats
 
 ## Code Style & Patterns
 - Use 2 spaces for indentation
