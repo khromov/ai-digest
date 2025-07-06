@@ -10,6 +10,7 @@ import aiDigest, {
   generateDigestFiles,
   generateDigestContent,
   writeDigestToFile,
+  getFileStats,
 } from "./index";
 
 const execAsync = promisify(exec);
@@ -692,7 +693,7 @@ describe("AI Digest Library API", () => {
       // With multiple directories, all files should be prefixed with directory name
       const tempDir1Name = path.basename(tempDir);
       const tempDir2Name = path.basename(tempDir2);
-      
+
       expect(fileNames).toContain(`${tempDir1Name}/file1.txt`);
       expect(fileNames).toContain(`${tempDir1Name}/file2.js`);
       expect(fileNames).toContain(`${tempDir2Name}/file4.md`);
@@ -726,5 +727,94 @@ describe("AI Digest Library API", () => {
     expect(binaryFile).toBeDefined();
     expect(binaryFile!.content).toContain("# image.png");
     expect(binaryFile!.content).toContain("This is a binary file of the type:");
+  });
+
+  it("should return file statistics sorted by size with getFileStats", async () => {
+    // Create files with different sizes
+    await fs.writeFile(path.join(tempDir, "small.txt"), "tiny");
+    await fs.writeFile(
+      path.join(tempDir, "medium.js"),
+      "console.log('medium sized file');",
+    );
+    await fs.writeFile(
+      path.join(tempDir, "large.md"),
+      "# Large file\n\nThis is a much larger file with more content to ensure different sizes.\n".repeat(
+        10,
+      ),
+    );
+
+    const result = await getFileStats({
+      inputDir: tempDir,
+      silent: true,
+    });
+
+    expect(result).toHaveProperty("files");
+    expect(Array.isArray(result.files)).toBe(true);
+    expect(result.files.length).toBeGreaterThanOrEqual(3);
+
+    // Check that files are sorted by size (largest first)
+    for (let i = 1; i < result.files.length; i++) {
+      expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
+        result.files[i].sizeInBytes,
+      );
+    }
+
+    // Check file properties
+    const firstFile = result.files[0];
+    expect(firstFile).toHaveProperty("path");
+    expect(firstFile).toHaveProperty("sizeInBytes");
+    expect(firstFile).not.toHaveProperty("gptTokens");
+    expect(firstFile).not.toHaveProperty("claudeTokens");
+
+    // Check total token counts
+    expect(result).toHaveProperty("totalGptTokens");
+    expect(result).toHaveProperty("totalClaudeTokens");
+    expect(typeof result.totalGptTokens).toBe("number");
+    expect(typeof result.totalClaudeTokens).toBe("number");
+    expect(result.totalGptTokens).toBeGreaterThanOrEqual(0);
+    expect(result.totalClaudeTokens).toBeGreaterThanOrEqual(0);
+
+    // Snapshot test the actual output
+    expect(result).toMatchSnapshot();
+  });
+
+  it("should handle binary file mascot.jpg correctly in getFileStats", async () => {
+    const result = await getFileStats({
+      inputDir: "./test",
+      silent: true,
+    });
+
+    // Find the mascot.jpg file in results
+    const mascotFile = result.files.find((f) => f.path.includes("mascot.jpg"));
+    expect(mascotFile).toBeDefined();
+    expect(mascotFile!.path).toBe("mascot.jpg");
+
+    // Verify the file size matches processed text content size (56 bytes for "# mascot.jpg\n\nThis is a binary file of the type: Image\n\n")
+    expect(mascotFile!.sizeInBytes).toBe(56);
+
+    // Verify that only path and sizeInBytes are present (no token counts per file)
+    expect(mascotFile!).toHaveProperty("path");
+    expect(mascotFile!).toHaveProperty("sizeInBytes");
+    expect(mascotFile!).not.toHaveProperty("gptTokens");
+    expect(mascotFile!).not.toHaveProperty("claudeTokens");
+
+    // Verify total token counts include contribution from binary file description
+    expect(result.totalGptTokens).toBeGreaterThan(0);
+    expect(result.totalClaudeTokens).toBeGreaterThan(0);
+
+    // Verify the file appears in the correct position based on size sorting
+    const mascotFileIndex = result.files.findIndex((f) =>
+      f.path.includes("mascot.jpg"),
+    );
+    expect(mascotFileIndex).toBeGreaterThanOrEqual(0);
+
+    // If there are other files, verify sorting (largest first)
+    if (result.files.length > 1) {
+      for (let i = 1; i < result.files.length; i++) {
+        expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
+          result.files[i].sizeInBytes,
+        );
+      }
+    }
   });
 });
