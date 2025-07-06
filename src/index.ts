@@ -154,6 +154,7 @@ export async function processFiles(options: {
     binaryAndSvgFileCount: number;
     includedFiles: string[];
     fileSizeInBytes: number;
+    originalFileSizes: Record<string, number>;
   };
 }> {
   const {
@@ -353,6 +354,7 @@ export async function processFiles(options: {
         binaryAndSvgFileCount,
         includedFiles,
         fileSizeInBytes: totalContentSize,
+        originalFileSizes: fileSizes,
       },
     };
   } catch (error) {
@@ -1020,9 +1022,9 @@ export async function getFileStats(
   files: Array<{
     path: string;
     sizeInBytes: number;
-    gptTokens: number;
-    claudeTokens: number;
   }>;
+  totalGptTokens: number;
+  totalClaudeTokens: number;
 }> {
   const {
     inputDir,
@@ -1046,7 +1048,7 @@ export async function getFileStats(
         : path.join(getActualWorkingDirectory(), outputFile);
 
   // Process files to get the content
-  const { files } = await processFiles({
+  const { files, stats } = await processFiles({
     inputDirs: directories,
     outputFilePath: resolvedOutputFile,
     useDefaultIgnores,
@@ -1055,7 +1057,10 @@ export async function getFileStats(
     silent,
   });
 
-  // Calculate token counts for each file and build result array
+  // Calculate token counts and build result array
+  let totalGptTokens = 0;
+  let totalClaudeTokens = 0;
+  
   const fileStats = files.map((file) => {
     const tokenCounts = estimateTokenCount(file.content);
     const gptTokens =
@@ -1069,18 +1074,24 @@ export async function getFileStats(
         ? tokenCounts.claudeTokens
         : 0;
 
+    // Add to totals
+    totalGptTokens += gptTokens;
+    totalClaudeTokens += claudeTokens;
+
     return {
       path: file.fileName,
-      sizeInBytes: Buffer.byteLength(file.content),
-      gptTokens,
-      claudeTokens,
+      sizeInBytes: stats.originalFileSizes[file.fileName] || Buffer.byteLength(file.content),
     };
   });
 
   // Sort by size (largest first)
   fileStats.sort((a, b) => b.sizeInBytes - a.sizeInBytes);
 
-  return { files: fileStats };
+  return { 
+    files: fileStats,
+    totalGptTokens,
+    totalClaudeTokens,
+  };
 }
 
 // Default export for library usage

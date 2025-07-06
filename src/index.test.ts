@@ -763,16 +763,58 @@ describe("AI Digest Library API", () => {
     const firstFile = result.files[0];
     expect(firstFile).toHaveProperty("path");
     expect(firstFile).toHaveProperty("sizeInBytes");
-    expect(firstFile).toHaveProperty("gptTokens");
-    expect(firstFile).toHaveProperty("claudeTokens");
+    expect(firstFile).not.toHaveProperty("gptTokens");
+    expect(firstFile).not.toHaveProperty("claudeTokens");
 
-    // Check that token counts are numbers
-    expect(typeof firstFile.gptTokens).toBe("number");
-    expect(typeof firstFile.claudeTokens).toBe("number");
-    expect(firstFile.gptTokens).toBeGreaterThanOrEqual(0);
-    expect(firstFile.claudeTokens).toBeGreaterThanOrEqual(0);
+    // Check total token counts
+    expect(result).toHaveProperty("totalGptTokens");
+    expect(result).toHaveProperty("totalClaudeTokens");
+    expect(typeof result.totalGptTokens).toBe("number");
+    expect(typeof result.totalClaudeTokens).toBe("number");
+    expect(result.totalGptTokens).toBeGreaterThanOrEqual(0);
+    expect(result.totalClaudeTokens).toBeGreaterThanOrEqual(0);
 
     // Snapshot test the actual output
     expect(result).toMatchSnapshot();
+  });
+
+  it("should handle binary file mascot.jpg correctly in getFileStats", async () => {
+    const result = await getFileStats({
+      inputDir: "./test",
+      silent: true,
+    });
+
+    // Find the mascot.jpg file in results
+    const mascotFile = result.files.find((f) => f.path.includes("mascot.jpg"));
+    expect(mascotFile).toBeDefined();
+    expect(mascotFile!.path).toBe("mascot.jpg");
+
+    // Verify the file size matches actual binary file size (10732 bytes)
+    expect(mascotFile!.sizeInBytes).toBe(10732);
+
+    // Verify that only path and sizeInBytes are present (no token counts per file)
+    expect(mascotFile!).toHaveProperty("path");
+    expect(mascotFile!).toHaveProperty("sizeInBytes");
+    expect(mascotFile!).not.toHaveProperty("gptTokens");
+    expect(mascotFile!).not.toHaveProperty("claudeTokens");
+
+    // Verify total token counts include contribution from binary file description
+    expect(result.totalGptTokens).toBeGreaterThan(0);
+    expect(result.totalClaudeTokens).toBeGreaterThan(0);
+
+    // Verify the file appears in the correct position based on size sorting
+    const mascotFileIndex = result.files.findIndex((f) =>
+      f.path.includes("mascot.jpg"),
+    );
+    expect(mascotFileIndex).toBeGreaterThanOrEqual(0);
+
+    // If there are other files, verify sorting (largest first)
+    if (result.files.length > 1) {
+      for (let i = 1; i < result.files.length; i++) {
+        expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
+          result.files[i].sizeInBytes,
+        );
+      }
+    }
   });
 });

@@ -33,7 +33,7 @@ This is a CLI tool called "ai-digest" that aggregates files into a single Markdo
 - `generateDigestContent()` - Core function that processes files and returns content + stats
 - `writeDigestToFile()` - Writes digest content to file with stats display
 - `watchFiles()` - Implements file watching for auto-rebuild functionality
-- `getFileStats()` - Returns file statistics (path, size, token counts) sorted by size without content (added in v1.3.0)
+- `getFileStats()` - Returns file statistics (path, size) sorted by size with total token counts, without content (added in v1.3.0)
 
 ### File Processing Flow
 1. Read ignore patterns from `.aidigestignore` and apply default ignores
@@ -49,7 +49,7 @@ The tool exports functions for programmatic use:
 - `generateDigestContent(options)` - Lower-level function returning content and stats
 - `writeDigestToFile(content, outputFile, stats)` - File writing utility
 - `generateDigestFiles(options)` - Returns array of processed file objects with content
-- `getFileStats(options)` - Returns file statistics sorted by size (largest first) with token counts but no content
+- `getFileStats(options)` - Returns file statistics sorted by size (largest first) with total token counts but no content
 
 ## Code Style
 - Use 2 spaces for indentation

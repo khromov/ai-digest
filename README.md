@@ -139,13 +139,16 @@ const stats = await aiDigest.getFileStats({
   silent: true
 });
 
-// Returns files sorted by size (largest first) with token counts
-console.log(stats.files[0]);
+// Returns files sorted by size (largest first) with total token counts
+console.log(stats);
 // {
-//   path: 'large-file.js',
-//   sizeInBytes: 15420,
-//   gptTokens: 3821,
-//   claudeTokens: 4102
+//   files: [
+//     { path: 'large-file.js', sizeInBytes: 15420 },
+//     { path: 'medium-file.ts', sizeInBytes: 8200 },
+//     { path: 'small-file.txt', sizeInBytes: 1024 }
+//   ],
+//   totalGptTokens: 5850,
+//   totalClaudeTokens: 6284
 // }
 ```
 
@@ -154,7 +157,7 @@ console.log(stats.files[0]);
 - `generateDigestFiles(options)` - Generate digest and return array of individual file objects
 - `generateDigestContent(options)` - Lower-level function that returns content and stats
 - `writeDigestToFile(content, outputFile, stats)` - Write digest content to a file
-- `getFileStats(options)` - Get file statistics (path, size, token counts) sorted by size without content
+- `getFileStats(options)` - Get file statistics (path, size) sorted by size with total token counts, without content
 
 ## Custom Ignore Patterns
 
