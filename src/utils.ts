@@ -1,6 +1,6 @@
 import ignore, { Ignore } from "ignore";
 import { isBinaryFile } from "isbinaryfile";
-import { encodingForModel } from "js-tiktoken";
+import { encoding_for_model } from "tiktoken";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
 
@@ -137,8 +137,10 @@ export function estimateTokenCount(text: string): {
   gptTokens: number;
   claudeTokens: number;
 } {
+  let enc: ReturnType<typeof encoding_for_model> | null = null;
+  
   try {
-    const enc = encodingForModel("gpt-4o");
+    enc = encoding_for_model("gpt-4o");
     const gptTokens = enc.encode(text).length;
     const claudeTokens = countTokens(text);
 
@@ -146,6 +148,11 @@ export function estimateTokenCount(text: string): {
   } catch (error) {
     console.error(error);
     return { gptTokens: 0, claudeTokens: 0 };
+  } finally {
+    // Always free the encoder resources when done
+    if (enc) {
+      enc.free();
+    }
   }
 }
 

@@ -15,3 +15,4 @@ tsconfig.json
 .nvmrc
 codebase.md
 *.snap
+docker-compose.yml

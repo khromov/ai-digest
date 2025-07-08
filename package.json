@@ -41,7 +41,7 @@
     "glob": "^11.0.2",
     "ignore": "^7.0.4",
     "isbinaryfile": "^5.0.4",
-    "js-tiktoken": "^1.0.20"
+    "tiktoken": "^1.0.18"
   },
   "homepage": "https://github.com/khromov/ai-digest#readme",
   "repository": {

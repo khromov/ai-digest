@@ -1,2 +1,4 @@
 test/test-ignore.ts
 dist
+.claude
+src/__snapshots__/*
