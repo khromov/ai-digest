@@ -29,6 +29,6 @@ exports[`AI Digest Library API should return file statistics sorted by size with
     },
   ],
   "totalClaudeTokens": 303,
-  "totalGptTokens": 268,
+  "totalGptTokens": 274,
 }
 `;
