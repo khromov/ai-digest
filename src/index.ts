@@ -525,7 +525,7 @@ export async function writeDigestToFile(
       ) {
         console.log(
           formatLog(
-            `Estimated token counts - Claude models: ${tokenCounts.claudeTokens} tokens, GPT-4: ${tokenCounts.gptTokens} tokens`,
+            `Estimated token counts - Claude models: ~${tokenCounts.claudeTokens} tokens, GPT-4: ~${tokenCounts.gptTokens} tokens`,
             "🔢",
           ),
         );

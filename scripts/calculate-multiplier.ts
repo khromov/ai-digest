@@ -12,8 +12,8 @@ import path from "path";
 
 async function calculateMultiplier(): Promise<number> {
   try {
-    // Read Moby Dick
-    const filePath = path.join(__dirname, "..", "moby-dick.txt");
+    // Read Moby Dick (now in scripts directory)
+    const filePath = path.join(__dirname, "moby-dick.txt");
     const text = await fs.readFile(filePath, "utf-8");
     
     // Use a representative sample (first 50,000 characters for speed)

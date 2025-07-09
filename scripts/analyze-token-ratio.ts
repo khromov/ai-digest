@@ -15,8 +15,8 @@ async function analyzeTokenRatio(): Promise<void> {
   console.log("=" .repeat(50));
 
   try {
-    // Read Moby Dick text file
-    const filePath = path.join(__dirname, "..", "moby-dick.txt");
+    // Read Moby Dick text file (now in scripts directory)
+    const filePath = path.join(__dirname, "moby-dick.txt");
     console.log(`📖 Reading file: ${filePath}`);
     
     const text = await fs.readFile(filePath, "utf-8");
@@ -126,7 +126,7 @@ async function testMultiplierAccuracy(): Promise<void> {
   ];
 
   // First, let's get the multiplier from a smaller sample
-  const mobyDickPath = path.join(__dirname, "..", "moby-dick.txt");
+  const mobyDickPath = path.join(__dirname, "moby-dick.txt");
   const fullText = await fs.readFile(mobyDickPath, "utf-8");
   
   // Use first 10,000 characters for multiplier calculation
