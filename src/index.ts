@@ -301,6 +301,11 @@ export async function processFiles(options: {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(relativePath);
 
+          if (content.includes('\u0000')) {
+            // console.warn(formatLog(`Warning: File ${relativePath} contains null bytes.`, '⚠️'));
+            content = content.replace(/\u0000/g, ''); // Remove null bytes
+          }
+
           content = escapeTripleBackticks(content);
 
           if (
@@ -525,7 +530,7 @@ export async function writeDigestToFile(
       ) {
         console.log(
           formatLog(
-            `Estimated token counts - Claude models: ${tokenCounts.claudeTokens} tokens, GPT-4: ${tokenCounts.gptTokens} tokens`,
+            `Estimated token counts - Claude models: ~${tokenCounts.claudeTokens} tokens, GPT-4: ~${tokenCounts.gptTokens} tokens`,
             "🔢",
           ),
         );

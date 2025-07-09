@@ -1,8 +1,11 @@
 import ignore, { Ignore } from "ignore";
 import { isBinaryFile } from "isbinaryfile";
-import { encodingForModel } from "js-tiktoken";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
+
+// Multiplier to convert token counts from Claude's tokenizer to OpenAI's tokenizer.
+// Derived from external calculations documented in [link-to-docs-or-script].
+const CLAUDE_TO_OPENAI_MULTIPLIER = 0.9048;
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
   ".py", // Python
@@ -138,13 +141,15 @@ export function estimateTokenCount(text: string): {
   claudeTokens: number;
 } {
   try {
-    const enc = encodingForModel("gpt-4o");
-    const gptTokens = enc.encode(text).length;
     const claudeTokens = countTokens(text);
+    const estimatedGptTokens = Math.round(claudeTokens * CLAUDE_TO_OPENAI_MULTIPLIER);
 
-    return { gptTokens, claudeTokens };
+    return { 
+      gptTokens: estimatedGptTokens, 
+      claudeTokens 
+    };
   } catch (error) {
-    console.error(error);
+    console.error("Error estimating token count:", error);
     return { gptTokens: 0, claudeTokens: 0 };
   }
 }

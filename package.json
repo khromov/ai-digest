@@ -1,6 +1,6 @@
 {
   "name": "ai-digest",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "CLI tool to aggregate files into a single Markdown file",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,10 @@
     "start": "ts-node src/index.ts",
     "prepublishOnly": "npm run build",
     "test": "jest --config jest.config.js",
-    "prettier": "prettier --write \"src/**/*.{js,ts,json}\" \"!src/**/*.snap\""
+    "prettier": "prettier --write \"src/**/*.{js,ts,json}\" \"!src/**/*.snap\"",
+    "analyze-tokens": "ts-node scripts/analyze-token-ratio.ts",
+    "calculate-multiplier": "ts-node scripts/calculate-multiplier.ts",
+    "test-multiplier": "ts-node scripts/test-multiplier.ts"
   },
   "keywords": [
     "cli",
@@ -30,6 +33,7 @@
     "jest": "^29.7.0",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
+    "tiktoken": "^1.0.18",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
@@ -40,8 +44,7 @@
     "commander": "^13.1.0",
     "glob": "^11.0.2",
     "ignore": "^7.0.4",
-    "isbinaryfile": "^5.0.4",
-    "js-tiktoken": "^1.0.20"
+    "isbinaryfile": "^5.0.4"
   },
   "homepage": "https://github.com/khromov/ai-digest#readme",
   "repository": {

@@ -1,0 +1,7 @@
+services:
+  mcp-server:
+    image: ghcr.io/khromov/coco:main
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./:/app
