@@ -3,6 +3,8 @@ import { isBinaryFile } from "isbinaryfile";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
 
+// Multiplier to convert token counts from Claude's tokenizer to OpenAI's tokenizer.
+// Derived from external calculations documented in [link-to-docs-or-script].
 const CLAUDE_TO_OPENAI_MULTIPLIER = 0.9048;
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
