@@ -14,17 +14,13 @@ async function calculateMultiplier(): Promise<number> {
   try {
     const filePath = path.join(__dirname, "moby-dick.txt");
     const text = await fs.readFile(filePath, "utf-8");
-    
-    // Use a representative sample (first 50,000 characters for speed)
     const sampleText = text.substring(0, 50000);
     
     console.log("🔢 Calculating Claude to OpenAI token multiplier...");
     console.log(`📏 Using sample of ${sampleText.length} characters`);
     
-    // Tokenize with Claude
     const claudeTokens = countTokens(sampleText);
     
-    // Tokenize with OpenAI
     let enc: ReturnType<typeof encoding_for_model> | null = null;
     let openaiTokens = 0;
     
@@ -50,7 +46,6 @@ async function calculateMultiplier(): Promise<number> {
   }
 }
 
-// Export the constant for use in other files
 export const CLAUDE_TO_OPENAI_MULTIPLIER = 0.9048;
 
 if (require.main === module) {

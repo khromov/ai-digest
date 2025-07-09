@@ -26,14 +26,12 @@ async function analyzeTokenRatio(): Promise<void> {
     console.log(`📝 Character count: ${text.length.toLocaleString()}`);
     console.log();
 
-    // Tokenize with Claude
     console.log("🤖 Tokenizing with Claude tokenizer...");
     const startClaude = Date.now();
     const claudeTokens = countTokens(text);
     const claudeTime = Date.now() - startClaude;
     console.log(`✅ Claude tokens: ${claudeTokens.toLocaleString()} (${claudeTime}ms)`);
 
-    // Tokenize with OpenAI (GPT-4o)
     console.log("🤖 Tokenizing with OpenAI tokenizer (GPT-4o)...");
     let enc: ReturnType<typeof encoding_for_model> | null = null;
     let openaiTokens = 0;
@@ -56,7 +54,6 @@ async function analyzeTokenRatio(): Promise<void> {
     console.log("📊 Analysis Results:");
     console.log("=" .repeat(30));
 
-    // Calculate ratios
     const claudeToOpenAIRatio = claudeTokens / openaiTokens;
     const openAIToClaudeRatio = openaiTokens / claudeTokens;
 
@@ -67,7 +64,6 @@ async function analyzeTokenRatio(): Promise<void> {
     console.log(`📈 OpenAI to Claude ratio: ${openAIToClaudeRatio.toFixed(4)}`);
     console.log();
 
-    // Provide recommendations
     console.log("💡 Recommendations:");
     console.log("-".repeat(20));
     
@@ -111,7 +107,6 @@ async function analyzeTokenRatio(): Promise<void> {
   }
 }
 
-// Additional function to test the multiplier with smaller text samples
 async function testMultiplierAccuracy(): Promise<void> {
   console.log();
   console.log("🧪 Testing Multiplier Accuracy with Sample Texts");
@@ -126,8 +121,6 @@ async function testMultiplierAccuracy(): Promise<void> {
 
   const mobyDickPath = path.join(__dirname, "moby-dick.txt");
   const fullText = await fs.readFile(mobyDickPath, "utf-8");
-  
-  // Use first 10,000 characters for multiplier calculation
   const sampleText = fullText.substring(0, 10000);
   
   const claudeTokensSample = countTokens(sampleText);
@@ -147,7 +140,6 @@ async function testMultiplierAccuracy(): Promise<void> {
   console.log(`🔢 Calculated multiplier from sample: ${multiplier.toFixed(4)}`);
   console.log();
 
-  // Test the multiplier on various text samples
   for (let i = 0; i < testTexts.length; i++) {
     const text = testTexts[i];
     console.log(`📝 Test ${i + 1}: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
@@ -175,7 +167,6 @@ async function testMultiplierAccuracy(): Promise<void> {
   }
 }
 
-// Main execution
 async function main(): Promise<void> {
   await analyzeTokenRatio();
   await testMultiplierAccuracy();
