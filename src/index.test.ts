@@ -253,21 +253,16 @@ describe("AI Digest CLI", () => {
   }, 15000);
 
   it("should recognize the --watch flag", async () => {
-    // This test verifies the CLI recognizes the --watch flag
-    // Set NODE_ENV to test to ensure watchFiles() exits early
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "test";
-
     try {
-      // Run CLI with watch flag
-      const { stdout } = await runCLI("--watch");
+      // Run CLI with watch flag and NODE_ENV=test to exit early
+      const { stdout } = await runCLIWithEnv("--watch", { NODE_ENV: "test" });
 
       // Verify watch mode was initialized but did not hang
       expect(stdout).toContain("Watch mode enabled");
       expect(stdout).toContain("Waiting for file changes");
-    } finally {
-      // Restore original environment
-      process.env.NODE_ENV = originalEnv;
+    } catch (error) {
+      // If there's any error, it should still have shown the watch messages
+      fail(`Watch test failed: ${error}`);
     }
   }, 10000);
 
