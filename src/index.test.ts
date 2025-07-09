@@ -812,4 +812,98 @@ describe("AI Digest Library API", () => {
       }
     }
   });
+
+  it("should respect additionalDefaultIgnores option", async () => {
+    // Create test files including a test file and a config file
+    await fs.writeFile(path.join(tempDir, "main.ts"), "const main = () => {};");
+    await fs.writeFile(path.join(tempDir, "main.test.ts"), "test('main', () => {});");
+    await fs.writeFile(path.join(tempDir, "config.json"), '{"key": "value"}');
+    
+    // First, get files without additional ignores
+    const withoutIgnores = await generateDigestFiles({
+      inputDir: tempDir,
+      silent: true,
+    });
+    
+    // Then get files with additionalDefaultIgnores
+    const withIgnores = await generateDigestFiles({
+      inputDir: tempDir,
+      additionalDefaultIgnores: ["*.test.ts", "*.json"],
+      silent: true,
+    });
+    
+    // Verify the test file and config file are excluded
+    const hasTestFile = withIgnores.files.some(f => f.fileName.endsWith(".test.ts"));
+    const hasJsonFile = withIgnores.files.some(f => f.fileName.endsWith(".json"));
+    const hasMainFile = withIgnores.files.some(f => f.fileName === "main.ts");
+    
+    expect(hasTestFile).toBe(false);
+    expect(hasJsonFile).toBe(false);
+    expect(hasMainFile).toBe(true);
+    
+    // Verify the file count decreased
+    expect(withIgnores.files.length).toBeLessThan(withoutIgnores.files.length);
+  });
+
+  it("should apply additionalDefaultIgnores across all three main functions", async () => {
+    // Create test files with specific patterns
+    await fs.writeFile(path.join(tempDir, "app.ts"), "const app = 'main';");
+    await fs.writeFile(path.join(tempDir, "app.spec.ts"), "describe('app', () => {});");
+    await fs.writeFile(path.join(tempDir, "temp.log"), "log entries");
+    await fs.writeFile(path.join(tempDir, ".env"), "SECRET=value");
+    
+    const additionalIgnores = ["*.spec.ts", "*.log"];
+    
+    // Test generateDigestFiles
+    const filesResult = await generateDigestFiles({
+      inputDir: tempDir,
+      additionalDefaultIgnores: additionalIgnores,
+      silent: true,
+    });
+    
+    // Test generateDigestContent
+    const contentResult = await generateDigestContent({
+      inputDir: tempDir,
+      additionalDefaultIgnores: additionalIgnores,
+      silent: true,
+    });
+    
+    // Test getFileStats
+    const statsResult = await getFileStats({
+      inputDir: tempDir,
+      additionalDefaultIgnores: additionalIgnores,
+      silent: true,
+    });
+    
+    // Verify all three functions exclude the same files
+    const filesHasSpec = filesResult.files.some(f => f.fileName.endsWith(".spec.ts"));
+    const filesHasLog = filesResult.files.some(f => f.fileName.endsWith(".log"));
+    const filesHasEnv = filesResult.files.some(f => f.fileName === ".env");
+    
+    const contentHasSpec = contentResult.files.some(f => f.fileName.endsWith(".spec.ts"));
+    const contentHasLog = contentResult.files.some(f => f.fileName.endsWith(".log"));
+    
+    const statsHasSpec = statsResult.files.some(f => f.path.endsWith(".spec.ts"));
+    const statsHasLog = statsResult.files.some(f => f.path.endsWith(".log"));
+    
+    // Spec and log files should be excluded by additionalDefaultIgnores
+    expect(filesHasSpec).toBe(false);
+    expect(filesHasLog).toBe(false);
+    expect(contentHasSpec).toBe(false);
+    expect(contentHasLog).toBe(false);
+    expect(statsHasSpec).toBe(false);
+    expect(statsHasLog).toBe(false);
+    
+    // .env should still be excluded by default ignores
+    expect(filesHasEnv).toBe(false);
+    
+    // All three functions should return the same number of files
+    expect(filesResult.files.length).toBe(contentResult.files.length);
+    expect(filesResult.files.length).toBe(statsResult.files.length);
+    
+    // Verify app.ts is included in all results
+    expect(filesResult.files.some(f => f.fileName === "app.ts")).toBe(true);
+    expect(contentResult.files.some(f => f.fileName === "app.ts")).toBe(true);
+    expect(statsResult.files.some(f => f.path === "app.ts")).toBe(true);
+  });
 });

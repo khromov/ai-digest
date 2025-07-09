@@ -144,6 +144,7 @@ export async function processFiles(options: {
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
   silent?: boolean;
+  additionalDefaultIgnores?: string[];
 }): Promise<{
   files: ProcessedFile[];
   stats: {
@@ -164,6 +165,7 @@ export async function processFiles(options: {
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
     silent = false,
+    additionalDefaultIgnores = [],
   } = options;
 
   // Support both single inputDir and multiple inputDirs
@@ -178,7 +180,7 @@ export async function processFiles(options: {
     }
 
     const defaultIgnore = useDefaultIgnores
-      ? ignore().add(DEFAULT_IGNORES)
+      ? ignore().add([...DEFAULT_IGNORES, ...additionalDefaultIgnores])
       : ignore();
 
     // Create custom ignore filter for each directory
@@ -377,6 +379,7 @@ export async function generateDigestContent(options: {
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
   silent?: boolean;
+  additionalDefaultIgnores?: string[];
 }): Promise<{
   content: string;
   files: ProcessedFile[];
@@ -899,6 +902,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag?: boolean;
     ignoreFile?: string;
     silent?: boolean;
+    additionalDefaultIgnores?: string[];
   } = {},
 ): Promise<{ files: ProcessedFile[] }> {
   const {
@@ -909,6 +913,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
     silent = false,
+    additionalDefaultIgnores = [],
   } = options;
 
   // Support both single inputDir and multiple inputDirs
@@ -931,6 +936,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag,
     ignoreFile,
     silent,
+    additionalDefaultIgnores,
   });
 
   return { files };
@@ -1005,6 +1011,7 @@ export async function getFileStats(
     useDefaultIgnores?: boolean;
     ignoreFile?: string;
     silent?: boolean;
+    additionalDefaultIgnores?: string[];
   } = {},
 ): Promise<{
   files: Array<{
@@ -1021,6 +1028,7 @@ export async function getFileStats(
     useDefaultIgnores = true,
     ignoreFile = ".aidigestignore",
     silent = true,
+    additionalDefaultIgnores = [],
   } = options;
 
   // Support both single inputDir and multiple inputDirs
@@ -1043,6 +1051,7 @@ export async function getFileStats(
     removeWhitespaceFlag: false,
     ignoreFile,
     silent,
+    additionalDefaultIgnores,
   });
 
   // Calculate token counts and build result array
