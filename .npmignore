@@ -16,3 +16,4 @@ tsconfig.json
 codebase.md
 *.snap
 docker-compose.yml
+scripts
