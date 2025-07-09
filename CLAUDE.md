@@ -11,6 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Format: `npm run prettier` - Format code with Prettier (excludes .snap files)
 - Publish: `npm run prepublishOnly` - Automatically runs build before publishing
 
+## Token Analysis Scripts
+- `npm run analyze-tokens` - Full analysis of Claude vs OpenAI token counts using Moby Dick
+- `npm run calculate-multiplier` - Calculate the Claude to OpenAI token multiplier
+- `npm run test-multiplier` - Test the current multiplier implementation with sample texts
+
 ## Version Management
 When adding a new feature or making significant changes:
 1. Bump the version in package.json following semantic versioning:
@@ -34,13 +39,14 @@ The architecture supports two usage patterns:
 1. **File Discovery**: Uses glob patterns to scan directories, respecting ignore patterns
 2. **Binary Detection**: Separates text files from binary files using `isbinaryfile` and file extensions
 3. **Content Processing**: Text files are wrapped in markdown code blocks; binary files get descriptive text
-4. **Token Estimation**: Calculates token counts using both GPT-4 and Claude tokenizers
+4. **Token Estimation**: Calculates token counts using Claude tokenizer with OpenAI estimation via multiplier
 5. **Output Generation**: Combines processed files into a single markdown document
 
 ### Key Components
 - `src/index.ts` - Main entry point containing CLI logic, library exports, and core processing functions
 - `src/utils.ts` - Utility functions for file processing, token counting, ignore patterns, and file type detection
 - `src/index.test.ts` - Comprehensive test suite covering both CLI and library functionality
+- `scripts/` - Analysis and utility scripts for token counting research
 
 ### Critical Functions
 - `processFiles()` - Core processing pipeline that handles file discovery, content processing, and statistics
@@ -61,11 +67,24 @@ The tool consistently uses processed content size (markdown wrapper + content) f
 - **Snapshot Testing**: Used for complex output structures (file stats, processed content)
 - **Binary File Testing**: Includes tests for actual binary files (mascot.jpg, smiley.svg)
 
-### Token Counting
-Dual tokenization using:
-- `js-tiktoken` for GPT-4 compatibility
-- `@anthropic-ai/tokenizer` for Claude models
-- Graceful fallback to approximations if tokenization fails
+### Token Counting Optimization
+**Performance Enhancement (v1.3.1)**: The tool now uses only Claude tokenization with a pre-calculated multiplier for OpenAI estimation:
+
+- **Primary Tokenization**: Uses `@anthropic-ai/tokenizer` for Claude models
+- **OpenAI Estimation**: Applies multiplier (0.9048) to estimate GPT tokens from Claude tokens
+- **Performance**: ~35% faster than dual tokenization (Claude tokenization is faster than OpenAI WASM)
+- **Accuracy**: 90-95% accurate for most English text, based on Moby Dick analysis
+- **Multiplier Source**: Calculated from full Moby Dick analysis showing Claude produces ~10.5% more tokens than OpenAI
+
+#### Token Analysis Scripts
+- `scripts/analyze-token-ratio.ts` - Comprehensive analysis using Moby Dick text
+- `scripts/calculate-multiplier.ts` - Simple multiplier calculation utility  
+- `scripts/test-multiplier.ts` - Test current multiplier implementation
+
+The multiplier (0.9048) was derived from analysis showing:
+- Claude: 343,313 tokens
+- OpenAI (GPT-4o): 310,641 tokens  
+- Ratio: 0.9048 (OpenAI/Claude)
 
 ## Library Usage
 The tool exports functions for programmatic use:

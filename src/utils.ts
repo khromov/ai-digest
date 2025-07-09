@@ -1,8 +1,11 @@
 import ignore, { Ignore } from "ignore";
 import { isBinaryFile } from "isbinaryfile";
-import { encoding_for_model } from "tiktoken";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
+
+// Multiplier to estimate OpenAI tokens from Claude tokens
+// Based on analysis of Moby Dick: Claude typically produces ~10.5% more tokens than OpenAI
+const CLAUDE_TO_OPENAI_MULTIPLIER = 0.9048;
 
 export const WHITESPACE_DEPENDENT_EXTENSIONS = [
   ".py", // Python
@@ -133,26 +136,32 @@ export function createIgnoreFilter(
   return ig;
 }
 
+/**
+ * Estimates token count using Claude tokenizer and calculates OpenAI equivalent using multiplier.
+ * This approach is faster and simpler than running both tokenizers.
+ * 
+ * @param text - Text to tokenize
+ * @returns Object with both Claude and estimated OpenAI token counts
+ */
 export function estimateTokenCount(text: string): {
   gptTokens: number;
   claudeTokens: number;
 } {
-  let enc: ReturnType<typeof encoding_for_model> | null = null;
-  
   try {
-    enc = encoding_for_model("gpt-4o");
-    const gptTokens = enc.encode(text).length;
+    // Get actual Claude token count
     const claudeTokens = countTokens(text);
+    
+    // Estimate OpenAI tokens using the multiplier
+    // Based on analysis: Claude typically produces ~10.5% more tokens than OpenAI
+    const estimatedGptTokens = Math.round(claudeTokens * CLAUDE_TO_OPENAI_MULTIPLIER);
 
-    return { gptTokens, claudeTokens };
+    return { 
+      gptTokens: estimatedGptTokens, 
+      claudeTokens 
+    };
   } catch (error) {
-    console.error(error);
+    console.error("Error estimating token count:", error);
     return { gptTokens: 0, claudeTokens: 0 };
-  } finally {
-    // Always free the encoder resources when done
-    if (enc) {
-      enc.free();
-    }
   }
 }
 
