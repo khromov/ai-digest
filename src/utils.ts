@@ -1,4 +1,4 @@
-import ignore, { Ignore } from "ignore";
+import ignore from "ignore";
 import { isBinaryFile } from "isbinaryfile";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
@@ -230,7 +230,7 @@ export function getActualWorkingDirectory(): string {
 }
 
 // Simple debounce function to avoid multiple rebuilds when many files change at once
-export function debounce<F extends (...args: any[]) => any>(
+export function debounce<F extends (...args: unknown[]) => unknown>(
   func: F,
   wait: number,
 ): (...args: Parameters<F>) => void {

@@ -1211,7 +1211,13 @@ describe("AI Digest Library API", () => {
     // Create .aidigestminify file
     await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
 
-    let capturedMetadata: any = null;
+    let capturedMetadata: {
+      filePath: string;
+      displayPath: string;
+      extension: string;
+      fileType: string;
+      defaultText: string;
+    } | null = null;
 
     // Define callback that captures metadata
     const captureCallback: MinifyFileDescriptionCallback = (metadata) => {
@@ -1229,11 +1235,11 @@ describe("AI Digest Library API", () => {
 
     // Verify metadata was captured and has correct properties
     expect(capturedMetadata).not.toBeNull();
-    expect(capturedMetadata.displayPath).toBe("bundle.min.js");
-    expect(capturedMetadata.extension).toBe("js");
-    expect(capturedMetadata.fileType).toBeDefined();
-    expect(capturedMetadata.filePath).toContain("bundle.min.js");
-    expect(capturedMetadata.defaultText).toContain(
+    expect(capturedMetadata!.displayPath).toBe("bundle.min.js");
+    expect(capturedMetadata!.extension).toBe("js");
+    expect(capturedMetadata!.fileType).toBeDefined();
+    expect(capturedMetadata!.filePath).toContain("bundle.min.js");
+    expect(capturedMetadata!.defaultText).toContain(
       "This is a minified file of type: JS"
     );
   });
