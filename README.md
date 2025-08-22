@@ -6,9 +6,9 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 Start by running the CLI tool in your project directory:
 
-\`\`\`bash
+```bash
 npx ai-digest
-\`\`\`
+```
 
 This will generate a `codebase.md` file with your codebase.
 
@@ -54,55 +54,63 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 1. Basic usage:
 
-   \`\`\`bash
+   ```bash
    npx ai-digest
-   \`\`\`
+   ```
 
 2. Specify input and output:
 
-   \`\`\`bash
+   ```bash
    npx ai-digest -i /path/to/your/project -o project_summary.md
-   \`\`\`
+   ```
 
 3. Enable whitespace removal:
 
-   \`\`\`bash
+   ```bash
    npx ai-digest --whitespace-removal
-   \`\`\`
+   ```
 
 4. Show files included with size statistics:
 
-   \`\`\`bash
+   ```bash
    npx ai-digest --show-output-files
-   \`\`\`
+   ```
 
 5. Show files sorted by size (largest first):
 
-   \`\`\`bash
+   ```bash
    npx ai-digest --show-output-files sort
-   \`\`\`
+   ```
 
 6. Watch mode:
 
-   \`\`\`bash
+   ```bash
    npx ai-digest --watch
-   \`\`\`
+   ```
 
-7. Combine multiple options:
+7. Use custom minify file:
 
-   \`\`\`bash
+   ```bash
+   npx ai-digest --minify-file .myminifypatterns
+   ```
+
+8. Combine multiple options:
+
+   ```bash
    npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files sort --watch
-   \`\`\`
+   ```
 
 ### Library Usage
 
 ai-digest can also be used as a library in your Node.js projects:
 
-\`\`\`bash
+```bash
 npm install ai-digest
-\`\`\`
+```
 
-\`\`\`javascript
+#### Basic Usage
+
+```javascript
 import aiDigest from 'ai-digest';
 
 // Generate digest content as a string
@@ -119,25 +127,75 @@ await aiDigest.generateDigest({
   removeWhitespaceFlag: true,
   showOutputFiles: 'sort'
 });
+```
+
+#### Using Minify Patterns
+
+```javascript
+import aiDigest from 'ai-digest';
+
+// Use minify patterns to exclude content from specific files
+const content = await aiDigest.generateDigest({
+  inputDir: './src',
+  outputFile: null,
+  minifyFile: '.aidigestminify',  // Default value
+  silent: true
+});
+
+// Or use a custom minify file location
+const content = await aiDigest.generateDigest({
+  inputDir: './src',
+  outputFile: null,
+  minifyFile: 'config/.myminifypatterns',
+  silent: true
+});
+
+// Get detailed content with statistics including minified file count
+const { content, files, stats } = await aiDigest.generateDigestContent({
+  inputDir: './src',
+  minifyFile: '.aidigestminify',
+  silent: true
+});
+
+console.log(`Total files: ${stats.totalFiles}`);
+console.log(`Minified files: ${stats.minifiedCount}`);
+console.log(`Included files: ${stats.includedCount}`);
+```
+
+#### Working with Individual Files
+
+```javascript
+import aiDigest from 'ai-digest';
 
 // Get individual file objects for custom filtering
 const { files } = await aiDigest.generateDigestFiles({
   inputDir: './src',
+  minifyFile: '.aidigestminify',  // Respects minify patterns
   silent: true
 });
 
 // Each file has: { fileName: string, content: string }
-// Content format is identical to generateDigest() but per-file
-console.log(files[0].fileName);  // e.g., "index.ts"
-console.log(files[0].content);   // "# index.ts\n\n\`\`\`ts\n// file content...\n\`\`\`\n\n"
+// Minified files will have placeholder content
+files.forEach(file => {
+  if (file.content.includes('(File exists but content excluded via .aidigestminify)')) {
+    console.log(`${file.fileName} was minified`);
+  }
+});
 
 // Apply custom filtering after processing
 const jsFiles = files.filter(file => file.fileName.endsWith('.js'));
 const customDigest = jsFiles.map(file => file.content).join('');
+```
+
+#### File Statistics
+
+```javascript
+import aiDigest from 'ai-digest';
 
 // Get file statistics without content (useful for analysis)
 const stats = await aiDigest.getFileStats({
   inputDir: './src',
+  minifyFile: '.aidigestminify',  // Minified files show reduced size
   silent: true
 });
 
@@ -146,20 +204,89 @@ console.log(stats);
 // {
 //   files: [
 //     { path: 'large-file.js', sizeInBytes: 15420 },
-//     { path: 'medium-file.ts', sizeInBytes: 8200 },
+//     { path: 'minified.min.js', sizeInBytes: 108 },  // Shows placeholder size
 //     { path: 'small-file.txt', sizeInBytes: 1024 }
 //   ],
 //   totalGptTokens: 5850,
 //   totalClaudeTokens: 6284
 // }
-\`\`\`
+```
 
-**Available functions:**
+#### Advanced Options
+
+```javascript
+import aiDigest from 'ai-digest';
+
+// All available options for library functions
+const options = {
+  inputDir: './src',                    // Single input directory
+  inputDirs: ['./src', './lib'],        // Multiple input directories (alternative to inputDir)
+  outputFile: 'output.md',               // Output file path (null for string return)
+  useDefaultIgnores: true,               // Use default ignore patterns
+  removeWhitespaceFlag: false,           // Remove unnecessary whitespace
+  ignoreFile: '.aidigestignore',         // Custom ignore file name
+  minifyFile: '.aidigestminify',         // Custom minify file name
+  showOutputFiles: false,                // Show file list (false, true, or 'sort')
+  silent: true,                          // Suppress console output
+  additionalDefaultIgnores: ['*.test.js'] // Additional patterns to ignore
+};
+
+// Use with any function
+const content = await aiDigest.generateDigest(options);
+const { files } = await aiDigest.generateDigestFiles(options);
+const { content: fullContent, files: allFiles, stats } = await aiDigest.generateDigestContent(options);
+const fileStats = await aiDigest.getFileStats(options);
+```
+
+### Available Functions
+
 - `generateDigest(options)` - Main function for generating digests
 - `generateDigestFiles(options)` - Generate digest and return array of individual file objects
-- `generateDigestContent(options)` - Lower-level function that returns content and stats
-- `writeDigestToFile(content, outputFile, stats)` - Write digest content to a file
+- `generateDigestContent(options)` - Lower-level function that returns content, files, and stats
+- `writeDigestToFile(content, outputFile, stats, showOutputFiles, fileSizes)` - Write digest content to a file
 - `getFileStats(options)` - Get file statistics (path, size) sorted by size with total token counts, without content
+
+### Function Return Types
+
+```typescript
+// generateDigest returns:
+string | void  // String when outputFile is null, void when writing to file
+
+// generateDigestFiles returns:
+{
+  files: Array<{
+    fileName: string;
+    content: string;  // Full content or minified placeholder
+  }>
+}
+
+// generateDigestContent returns:
+{
+  content: string;
+  files: Array<{ fileName: string; content: string; }>;
+  stats: {
+    totalFiles: number;
+    includedCount: number;
+    defaultIgnoredCount: number;
+    customIgnoredCount: number;
+    minifiedCount: number;
+    binaryAndSvgFileCount: number;
+    includedFiles: string[];
+    estimatedTokens: number;
+    fileSizeInBytes: number;
+  }
+}
+
+// getFileStats returns:
+{
+  files: Array<{
+    path: string;
+    sizeInBytes: number;
+  }>;
+  totalGptTokens: number;
+  totalClaudeTokens: number;
+}
+```
 
 ## Custom Ignore Patterns
 
@@ -172,7 +299,7 @@ Use the `--show-output-files` flag to see which files are being included, making
 ai-digest supports custom minify patterns using a `.aidigestminify` file in the root directory of your project. This file works similarly to `.aidigestignore`, but instead of excluding files completely, it includes them with a placeholder message indicating the file exists but its content is not included in the codebase dump. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context.
 
 Example `.aidigestminify` file:
-\`\`\`
+```
 # Minified JavaScript files
 *.min.js
 *.min.css
@@ -188,15 +315,15 @@ build/*
 # Large data files
 *.csv
 *.json
-\`\`\`
+```
 
 When a file matches a minify pattern, it will appear in the output like this:
-\`\`\`
+```
 # dist/bundle.min.js
 
 This is a minified file of type: JS
 (File exists but content excluded via .aidigestminify)
-\`\`\`
+```
 
 ## Whitespace Removal
 
@@ -228,9 +355,9 @@ To pass flags to the CLI, use the `--` flag, like this: `npm run start -- --whit
 
 ## Deploy New Version
 
-\`\`\`
+```
 npm publish
-\`\`\`
+```
 
 ## Contributing
 
