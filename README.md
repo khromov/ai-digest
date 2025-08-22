@@ -170,22 +170,12 @@ When using ai-digest as a library, you can customize how minified files are repr
 ```javascript
 import aiDigest, { MinifyFileDescriptionCallback } from 'ai-digest';
 
-// Define a custom callback to format minified file descriptions
 const customMinifyDescription: MinifyFileDescriptionCallback = (metadata) => {
-  // metadata contains:
-  // - filePath: full path to the file
-  // - displayPath: relative path shown in output
-  // - extension: file extension (e.g., 'js', 'css')
-  // - fileType: detected file type
-  // - defaultText: the default placeholder text
-  
-  // Return custom formatted text
   return `# ${metadata.displayPath}\n\n` +
     `⚠️ Minified ${metadata.extension.toUpperCase()} file\n` +
     `Size reduced for AI context optimization.\n\n`;
 };
 
-// Use the callback with any library function
 const content = await aiDigest.generateDigest({
   inputDir: './src',
   outputFile: null,
@@ -193,52 +183,14 @@ const content = await aiDigest.generateDigest({
   minifyFileDescription: customMinifyDescription,
   silent: true
 });
-
-// Works with all library functions that support minify
-const { files } = await aiDigest.generateDigestFiles({
-  inputDir: './src',
-  minifyFile: '.aidigestminify',
-  minifyFileDescription: customMinifyDescription,
-  silent: true
-});
 ```
 
-##### Advanced Example: Different Descriptions by File Type
-
-```javascript
-const typeBasedDescription: MinifyFileDescriptionCallback = (metadata) => {
-  switch (metadata.extension) {
-    case 'js':
-      return `# ${metadata.displayPath}\n\n📦 JavaScript bundle (minified)\n\n`;
-    case 'css':
-      return `# ${metadata.displayPath}\n\n🎨 Stylesheet bundle (minified)\n\n`;
-    case 'json':
-      return `# ${metadata.displayPath}\n\n📊 Data file (content excluded)\n\n`;
-    default:
-      // Fall back to default text for unknown types
-      return metadata.defaultText;
-  }
-};
-
-const content = await aiDigest.generateDigest({
-  inputDir: './dist',
-  outputFile: null,
-  minifyFile: '.aidigestminify',
-  minifyFileDescription: typeBasedDescription,
-  silent: true
-});
-```
-
-##### Extending the Default Description
-
-```javascript
-// Add extra information while keeping the default format
-const extendedDescription: MinifyFileDescriptionCallback = (metadata) => {
-  return metadata.defaultText + 
-    `Note: Original file at ${metadata.filePath}\n` +
-    `Consider reviewing the source files instead.\n`;
-};
-```
+The callback receives metadata about each minified file:
+- `filePath`: full path to the file
+- `displayPath`: relative path shown in output
+- `extension`: file extension (e.g., 'js', 'css')
+- `fileType`: detected file type
+- `defaultText`: the default placeholder text
 
 #### Working with Individual Files
 
