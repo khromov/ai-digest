@@ -23,6 +23,7 @@ Once you've generated the Markdown file containing your codebase, you can use it
 - View file size statistics with visual bar charts
 - Watch mode for automatic rebuilding when files change
 - Minify file support for including files with placeholder content
+- Customizable minified file descriptions via callback function (library mode)
 
 ### With ChatGPT:
 
@@ -162,6 +163,83 @@ console.log(`Minified files: ${stats.minifiedCount}`);
 console.log(`Included files: ${stats.includedCount}`);
 ```
 
+#### Customizing Minified File Descriptions
+
+When using ai-digest as a library, you can customize how minified files are represented in the output by providing a `minifyFileDescription` callback function:
+
+```javascript
+import aiDigest, { MinifyFileDescriptionCallback } from 'ai-digest';
+
+// Define a custom callback to format minified file descriptions
+const customMinifyDescription: MinifyFileDescriptionCallback = (metadata) => {
+  // metadata contains:
+  // - filePath: full path to the file
+  // - displayPath: relative path shown in output
+  // - extension: file extension (e.g., 'js', 'css')
+  // - fileType: detected file type
+  // - defaultText: the default placeholder text
+  
+  // Return custom formatted text
+  return `# ${metadata.displayPath}\n\n` +
+    `⚠️ Minified ${metadata.extension.toUpperCase()} file\n` +
+    `Size reduced for AI context optimization.\n\n`;
+};
+
+// Use the callback with any library function
+const content = await aiDigest.generateDigest({
+  inputDir: './src',
+  outputFile: null,
+  minifyFile: '.aidigestminify',
+  minifyFileDescription: customMinifyDescription,
+  silent: true
+});
+
+// Works with all library functions that support minify
+const { files } = await aiDigest.generateDigestFiles({
+  inputDir: './src',
+  minifyFile: '.aidigestminify',
+  minifyFileDescription: customMinifyDescription,
+  silent: true
+});
+```
+
+##### Advanced Example: Different Descriptions by File Type
+
+```javascript
+const typeBasedDescription: MinifyFileDescriptionCallback = (metadata) => {
+  switch (metadata.extension) {
+    case 'js':
+      return `# ${metadata.displayPath}\n\n📦 JavaScript bundle (minified)\n\n`;
+    case 'css':
+      return `# ${metadata.displayPath}\n\n🎨 Stylesheet bundle (minified)\n\n`;
+    case 'json':
+      return `# ${metadata.displayPath}\n\n📊 Data file (content excluded)\n\n`;
+    default:
+      // Fall back to default text for unknown types
+      return metadata.defaultText;
+  }
+};
+
+const content = await aiDigest.generateDigest({
+  inputDir: './dist',
+  outputFile: null,
+  minifyFile: '.aidigestminify',
+  minifyFileDescription: typeBasedDescription,
+  silent: true
+});
+```
+
+##### Extending the Default Description
+
+```javascript
+// Add extra information while keeping the default format
+const extendedDescription: MinifyFileDescriptionCallback = (metadata) => {
+  return metadata.defaultText + 
+    `Note: Original file at ${metadata.filePath}\n` +
+    `Consider reviewing the source files instead.\n`;
+};
+```
+
 #### Working with Individual Files
 
 ```javascript
@@ -226,6 +304,7 @@ const options = {
   removeWhitespaceFlag: false,           // Remove unnecessary whitespace
   ignoreFile: '.aidigestignore',         // Custom ignore file name
   minifyFile: '.aidigestminify',         // Custom minify file name
+  minifyFileDescription: callback,       // Custom minify description callback (optional)
   showOutputFiles: false,                // Show file list (false, true, or 'sort')
   silent: true,                          // Suppress console output
   additionalDefaultIgnores: ['*.test.js'] // Additional patterns to ignore
@@ -249,6 +328,15 @@ const fileStats = await aiDigest.getFileStats(options);
 ### Function Return Types
 
 ```typescript
+// Type for minify file description callback
+type MinifyFileDescriptionCallback = (metadata: {
+  filePath: string;       // Full path to the file
+  displayPath: string;    // Relative path shown in output
+  extension: string;      // File extension (without dot)
+  fileType: string;       // Detected file type
+  defaultText: string;    // Default placeholder text
+}) => string;
+
 // generateDigest returns:
 string | void  // String when outputFile is null, void when writing to file
 
@@ -324,6 +412,8 @@ When a file matches a minify pattern, it will appear in the output like this:
 This is a minified file of type: JS
 (File exists but content excluded via .aidigestminify)
 ```
+
+In library mode, you can customize these placeholder descriptions using the `minifyFileDescription` callback option (see Library Usage section above).
 
 ## Whitespace Removal
 

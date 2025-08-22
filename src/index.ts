@@ -23,6 +23,15 @@ import {
 // Define the type for the ignore instance
 type IgnoreInstance = ReturnType<typeof ignore>;
 
+// Define the type for minify file description callback
+export type MinifyFileDescriptionCallback = (metadata: {
+  filePath: string;
+  displayPath: string;
+  extension: string;
+  fileType: string;
+  defaultText: string;
+}) => string;
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 function getActualWorkingDirectory() {
@@ -144,6 +153,7 @@ export async function processFiles(options: {
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
   minifyFile?: string;
+  minifyFileDescription?: MinifyFileDescriptionCallback;
   silent?: boolean;
   additionalDefaultIgnores?: string[];
 }): Promise<{
@@ -167,6 +177,7 @@ export async function processFiles(options: {
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
     minifyFile = ".aidigestminify",
+    minifyFileDescription,
     silent = false,
     additionalDefaultIgnores = [],
   } = options;
@@ -328,9 +339,23 @@ export async function processFiles(options: {
           const fileType = getFileType(fullPath);
           const extension = path.extname(relativePath).slice(1) || "unknown";
           
-          fileContent = `# ${displayPath}\n\n`;
-          fileContent += `This is a minified file of type: ${extension.toUpperCase()}\n`;
-          fileContent += `(File exists but content excluded via .aidigestminify)\n\n`;
+          // Create default text
+          let defaultText = `# ${displayPath}\n\n`;
+          defaultText += `This is a minified file of type: ${extension.toUpperCase()}\n`;
+          defaultText += `(File exists but content excluded via .aidigestminify)\n\n`;
+          
+          // Use callback if provided, otherwise use default
+          if (minifyFileDescription) {
+            fileContent = minifyFileDescription({
+              filePath: fullPath,
+              displayPath,
+              extension,
+              fileType,
+              defaultText,
+            });
+          } else {
+            fileContent = defaultText;
+          }
           
           minifiedCount++;
           includedCount++;
@@ -416,6 +441,7 @@ export async function generateDigestContent(options: {
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
   minifyFile?: string;
+  minifyFileDescription?: MinifyFileDescriptionCallback;
   silent?: boolean;
   additionalDefaultIgnores?: string[];
 }): Promise<{
@@ -946,8 +972,10 @@ export async function generateDigest(
     removeWhitespaceFlag?: boolean;
     ignoreFile?: string;
     minifyFile?: string;
+    minifyFileDescription?: MinifyFileDescriptionCallback;
     showOutputFiles?: boolean | string;
     silent?: boolean;
+    additionalDefaultIgnores?: string[];
   } = {},
 ): Promise<string | void> {
   const {
@@ -958,8 +986,10 @@ export async function generateDigest(
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
     minifyFile = ".aidigestminify",
+    minifyFileDescription,
     showOutputFiles = false,
     silent = false,
+    additionalDefaultIgnores = [],
   } = options;
 
   // Support both single inputDir and multiple inputDirs
@@ -982,7 +1012,9 @@ export async function generateDigest(
     removeWhitespaceFlag,
     ignoreFile,
     minifyFile,
+    minifyFileDescription,
     silent,
+    additionalDefaultIgnores,
   });
 
   // If outputFile is null, return the content as string
@@ -1004,6 +1036,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag?: boolean;
     ignoreFile?: string;
     minifyFile?: string;
+    minifyFileDescription?: MinifyFileDescriptionCallback;
     silent?: boolean;
     additionalDefaultIgnores?: string[];
   } = {},
@@ -1016,6 +1049,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
     minifyFile = ".aidigestminify",
+    minifyFileDescription,
     silent = false,
     additionalDefaultIgnores = [],
   } = options;
@@ -1040,6 +1074,7 @@ export async function generateDigestFiles(
     removeWhitespaceFlag,
     ignoreFile,
     minifyFile,
+    minifyFileDescription,
     silent,
     additionalDefaultIgnores,
   });
@@ -1123,6 +1158,7 @@ export async function getFileStats(
     useDefaultIgnores?: boolean;
     ignoreFile?: string;
     minifyFile?: string;
+    minifyFileDescription?: MinifyFileDescriptionCallback;
     silent?: boolean;
     additionalDefaultIgnores?: string[];
   } = {},
@@ -1141,6 +1177,7 @@ export async function getFileStats(
     useDefaultIgnores = true,
     ignoreFile = ".aidigestignore",
     minifyFile = ".aidigestminify",
+    minifyFileDescription,
     silent = true,
     additionalDefaultIgnores = [],
   } = options;
@@ -1165,6 +1202,7 @@ export async function getFileStats(
     removeWhitespaceFlag: false,
     ignoreFile,
     minifyFile,
+    minifyFileDescription,
     silent,
     additionalDefaultIgnores,
   });

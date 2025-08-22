@@ -11,6 +11,7 @@ import aiDigest, {
   generateDigestContent,
   writeDigestToFile,
   getFileStats,
+  MinifyFileDescriptionCallback,
 } from "./index";
 
 const execAsync = promisify(exec);
@@ -23,7 +24,7 @@ const runCLI = async (args: string = "") => {
 // New helper to run CLI with specific environment variables
 const runCLIWithEnv = async (
   args: string = "",
-  env: Record<string, string> = {},
+  env: Record<string, string> = {}
 ) => {
   const cliPath = path.resolve(__dirname, "index.ts");
   const envVars = Object.entries(env)
@@ -51,7 +52,7 @@ describe("AI Digest CLI", () => {
   it("should respect custom output file", async () => {
     const { stdout } = await runCLI("-o custom_output.md");
     expect(stdout).toMatch(
-      /Files aggregated successfully into .*custom_output\.md/,
+      /Files aggregated successfully into .*custom_output\.md/
     );
   }, 10000);
 
@@ -68,7 +69,7 @@ describe("AI Digest CLI", () => {
   it("should not remove whitespace for whitespace-dependent files", async () => {
     const { stdout } = await runCLI("--whitespace-removal");
     expect(stdout).toContain(
-      "Whitespace removal enabled (except for whitespace-dependent languages)",
+      "Whitespace removal enabled (except for whitespace-dependent languages)"
     );
   }, 10000);
 
@@ -105,7 +106,7 @@ describe("AI Digest CLI", () => {
       await fs.writeFile(path.join(tempDir, "test1.txt"), "Test content 1");
       await fs.writeFile(
         path.join(tempDir, "test2.js"),
-        'console.log("Test content 2");',
+        'console.log("Test content 2");'
       );
 
       // Create a subdirectory with a file
@@ -113,7 +114,7 @@ describe("AI Digest CLI", () => {
       await fs.mkdir(subDir);
       await fs.writeFile(
         path.join(subDir, "test3.py"),
-        'print("Test content 3")',
+        'print("Test content 3")'
       );
 
       // Run the CLI with the --input flag
@@ -148,18 +149,18 @@ describe("AI Digest CLI", () => {
   it("should respect custom ignore file", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-"),
+      path.join(os.tmpdir(), "ai-digest-custom-ignore-test-")
     );
 
     try {
       // Create some test files in the temporary directory
       await fs.writeFile(
         path.join(tempDir, "include.txt"),
-        "This file should be included",
+        "This file should be included"
       );
       await fs.writeFile(
         path.join(tempDir, "exclude.js"),
-        "This file should be excluded",
+        "This file should be excluded"
       );
 
       // Create a custom ignore file
@@ -167,7 +168,7 @@ describe("AI Digest CLI", () => {
 
       // Run the CLI with the custom ignore file
       const { stdout } = await runCLI(
-        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`,
+        `--input ${tempDir} --ignore-file custom.ignore --show-output-files`
       );
 
       // Check if the output contains only the files we want to include
@@ -196,7 +197,7 @@ describe("AI Digest CLI", () => {
   it("should sort files in natural path order", async () => {
     // Create a temporary directory
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-sort-test-"),
+      path.join(os.tmpdir(), "ai-digest-sort-test-")
     );
 
     try {
@@ -207,19 +208,19 @@ describe("AI Digest CLI", () => {
 
       await fs.writeFile(
         path.join(tempDir, "01-first", "01-file.txt"),
-        "First file",
+        "First file"
       );
       await fs.writeFile(
         path.join(tempDir, "01-first", "02-file.txt"),
-        "Second file",
+        "Second file"
       );
       await fs.writeFile(
         path.join(tempDir, "02-second", "01-file.txt"),
-        "Third file",
+        "Third file"
       );
       await fs.writeFile(
         path.join(tempDir, "10-tenth", "01-file.txt"),
-        "Fourth file",
+        "Fourth file"
       );
       await fs.writeFile(path.join(tempDir, "root-file.txt"), "Root file");
 
@@ -270,36 +271,36 @@ describe("AI Digest CLI", () => {
   it("should handle multiple input directories", async () => {
     // Create two temporary directories
     const tempDir1 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir1-"),
+      path.join(os.tmpdir(), "ai-digest-test-dir1-")
     );
     const tempDir2 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test-dir2-"),
+      path.join(os.tmpdir(), "ai-digest-test-dir2-")
     );
 
     try {
       // Create test files in first directory
       await fs.writeFile(
         path.join(tempDir1, "dir1-file1.txt"),
-        "Content from dir1",
+        "Content from dir1"
       );
       await fs.writeFile(
         path.join(tempDir1, "common.txt"),
-        "Common file in dir1",
+        "Common file in dir1"
       );
 
       // Create test files in second directory
       await fs.writeFile(
         path.join(tempDir2, "dir2-file1.txt"),
-        "Content from dir2",
+        "Content from dir2"
       );
       await fs.writeFile(
         path.join(tempDir2, "common.txt"),
-        "Common file in dir2",
+        "Common file in dir2"
       );
 
       // Run CLI with multiple input directories
       const { stdout } = await runCLI(
-        `--input ${tempDir1} ${tempDir2} --show-output-files`,
+        `--input ${tempDir1} ${tempDir2} --show-output-files`
       );
 
       // Verify output
@@ -338,7 +339,7 @@ describe("AI Digest CLI", () => {
   it("should respect INIT_CWD when different from process.cwd()", async () => {
     // Create a temporary directory structure
     const tempRootDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-wd-test-"),
+      path.join(os.tmpdir(), "ai-digest-wd-test-")
     );
     const subDir = path.join(tempRootDir, "subdir");
     await fs.mkdir(subDir);
@@ -346,7 +347,7 @@ describe("AI Digest CLI", () => {
     // Create test files
     await fs.writeFile(
       path.join(tempRootDir, "root-file.txt"),
-      "Root file content",
+      "Root file content"
     );
 
     try {
@@ -381,28 +382,25 @@ describe("AI Digest CLI", () => {
   // New tests for minify functionality
   it("should respect .aidigestminify file", async () => {
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-minify-test-"),
+      path.join(os.tmpdir(), "ai-digest-minify-test-")
     );
 
     try {
       // Create test files
       await fs.writeFile(
         path.join(tempDir, "regular.js"),
-        'console.log("Regular file");',
+        'console.log("Regular file");'
       );
       await fs.writeFile(
         path.join(tempDir, "minified.min.js"),
-        'function min(){console.log("minified")}',
+        'function min(){console.log("minified")}'
       );
-      await fs.writeFile(
-        path.join(tempDir, "data.json"),
-        '{"key": "value"}',
-      );
+      await fs.writeFile(path.join(tempDir, "data.json"), '{"key": "value"}');
 
       // Create .aidigestminify file
       await fs.writeFile(
         path.join(tempDir, ".aidigestminify"),
-        "*.min.js\n*.json",
+        "*.min.js\n*.json"
       );
 
       // Run the CLI
@@ -425,7 +423,9 @@ describe("AI Digest CLI", () => {
       // Minified files should have placeholder content
       expect(content).toContain("# minified.min.js");
       expect(content).toContain("This is a minified file of type: JS");
-      expect(content).toContain("(File exists but content excluded via .aidigestminify)");
+      expect(content).toContain(
+        "(File exists but content excluded via .aidigestminify)"
+      );
       expect(content).not.toContain('function min(){console.log("minified")}');
 
       expect(content).toContain("# data.json");
@@ -438,18 +438,18 @@ describe("AI Digest CLI", () => {
 
   it("should respect custom minify file with --minify-file flag", async () => {
     const tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-custom-minify-test-"),
+      path.join(os.tmpdir(), "ai-digest-custom-minify-test-")
     );
 
     try {
       // Create test files
       await fs.writeFile(
         path.join(tempDir, "regular.js"),
-        'console.log("Regular");',
+        'console.log("Regular");'
       );
       await fs.writeFile(
         path.join(tempDir, "exclude.txt"),
-        "Should be minified",
+        "Should be minified"
       );
 
       // Create custom minify file
@@ -457,7 +457,7 @@ describe("AI Digest CLI", () => {
 
       // Run the CLI with custom minify file
       const { stdout } = await runCLI(
-        `--input ${tempDir} --minify-file custom.minify`,
+        `--input ${tempDir} --minify-file custom.minify`
       );
 
       // Check output
@@ -493,7 +493,7 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
     await fs.writeFile(
       path.join(tempDir, "file2.js"),
-      'console.log("Test content 2");',
+      'console.log("Test content 2");'
     );
 
     // Create a subdirectory with a file
@@ -501,7 +501,7 @@ describe("AI Digest Library API", () => {
     await fs.mkdir(subDir);
     await fs.writeFile(
       path.join(subDir, "file3.py"),
-      'print("Test content 3")',
+      'print("Test content 3")'
     );
   });
 
@@ -580,7 +580,7 @@ describe("AI Digest Library API", () => {
     // Create a file with whitespace
     await fs.writeFile(
       path.join(tempDir, "whitespace.js"),
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
     );
 
     // With whitespace removal
@@ -601,11 +601,11 @@ describe("AI Digest Library API", () => {
 
     // With whitespace removal, the string should be more compact
     expect(contentWithRemoval).toContain(
-      'function test() { console.log("multiple spaces"); }',
+      'function test() { console.log("multiple spaces"); }'
     );
     // Without whitespace removal, the original spacing should be preserved
     expect(contentWithoutRemoval).toContain(
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
     );
   });
 
@@ -651,7 +651,7 @@ describe("AI Digest Library API", () => {
 
     // Verify console output was generated
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Files aggregated successfully"),
+      expect.stringContaining("Files aggregated successfully")
     );
 
     // Clean up
@@ -708,9 +708,9 @@ describe("AI Digest Library API", () => {
     const file1 = result.files.find((f) => f.fileName === "file1.txt");
     expect(file1).toBeDefined();
     expect(file1!.content).toContain("# file1.txt");
-    expect(file1!.content).toContain("```txt");
+    expect(file1!.content).toContain("\`\`\`txt");
     expect(file1!.content).toContain("Test content 1");
-    expect(file1!.content).toMatch(/```\n\n$/);
+    expect(file1!.content).toMatch(/\`\`\`\n\n$/);
 
     const file2 = result.files.find((f) => f.fileName === "file2.js");
     expect(file2).toBeDefined();
@@ -738,7 +738,7 @@ describe("AI Digest Library API", () => {
     // Create a file with whitespace
     await fs.writeFile(
       path.join(tempDir, "whitespace.js"),
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
     );
 
     // With whitespace removal
@@ -756,24 +756,24 @@ describe("AI Digest Library API", () => {
     });
 
     const whitespaceFileWithRemoval = resultWithRemoval.files.find(
-      (f) => f.fileName === "whitespace.js",
+      (f) => f.fileName === "whitespace.js"
     );
     const whitespaceFileWithoutRemoval = resultWithoutRemoval.files.find(
-      (f) => f.fileName === "whitespace.js",
+      (f) => f.fileName === "whitespace.js"
     );
 
     expect(whitespaceFileWithRemoval!.content).toContain(
-      'function test() { console.log("multiple spaces"); }',
+      'function test() { console.log("multiple spaces"); }'
     );
     expect(whitespaceFileWithoutRemoval!.content).toContain(
-      'function test() {\n    console.log("multiple    spaces");\n\n\n}',
+      'function test() {\n    console.log("multiple    spaces");\n\n\n}'
     );
   });
 
   it("should work with multiple input directories in generateDigestFiles", async () => {
     // Create another temp directory
     const tempDir2 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test2-"),
+      path.join(os.tmpdir(), "ai-digest-test2-")
     );
 
     try {
@@ -831,13 +831,13 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "small.txt"), "tiny");
     await fs.writeFile(
       path.join(tempDir, "medium.js"),
-      "console.log('medium sized file');",
+      "console.log('medium sized file');"
     );
     await fs.writeFile(
       path.join(tempDir, "large.md"),
       "# Large file\n\nThis is a much larger file with more content to ensure different sizes.\n".repeat(
-        10,
-      ),
+        10
+      )
     );
 
     const result = await getFileStats({
@@ -852,7 +852,7 @@ describe("AI Digest Library API", () => {
     // Check that files are sorted by size (largest first)
     for (let i = 1; i < result.files.length; i++) {
       expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
-        result.files[i].sizeInBytes,
+        result.files[i].sizeInBytes
       );
     }
 
@@ -901,7 +901,7 @@ describe("AI Digest Library API", () => {
 
     // Verify the file appears in the correct position based on size sorting
     const mascotFileIndex = result.files.findIndex((f) =>
-      f.path.includes("mascot.jpg"),
+      f.path.includes("mascot.jpg")
     );
     expect(mascotFileIndex).toBeGreaterThanOrEqual(0);
 
@@ -909,7 +909,7 @@ describe("AI Digest Library API", () => {
     if (result.files.length > 1) {
       for (let i = 1; i < result.files.length; i++) {
         expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
-          result.files[i].sizeInBytes,
+          result.files[i].sizeInBytes
         );
       }
     }
@@ -918,31 +918,38 @@ describe("AI Digest Library API", () => {
   it("should respect additionalDefaultIgnores option", async () => {
     // Create test files including a test file and a config file
     await fs.writeFile(path.join(tempDir, "main.ts"), "const main = () => {};");
-    await fs.writeFile(path.join(tempDir, "main.test.ts"), "test('main', () => {});");
+    await fs.writeFile(
+      path.join(tempDir, "main.test.ts"),
+      "test('main', () => {});"
+    );
     await fs.writeFile(path.join(tempDir, "config.json"), '{"key": "value"}');
-    
+
     // First, get files without additional ignores
     const withoutIgnores = await generateDigestFiles({
       inputDir: tempDir,
       silent: true,
     });
-    
+
     // Then get files with additionalDefaultIgnores
     const withIgnores = await generateDigestFiles({
       inputDir: tempDir,
       additionalDefaultIgnores: ["*.test.ts", "*.json"],
       silent: true,
     });
-    
+
     // Verify the test file and config file are excluded
-    const hasTestFile = withIgnores.files.some(f => f.fileName.endsWith(".test.ts"));
-    const hasJsonFile = withIgnores.files.some(f => f.fileName.endsWith(".json"));
-    const hasMainFile = withIgnores.files.some(f => f.fileName === "main.ts");
-    
+    const hasTestFile = withIgnores.files.some((f) =>
+      f.fileName.endsWith(".test.ts")
+    );
+    const hasJsonFile = withIgnores.files.some((f) =>
+      f.fileName.endsWith(".json")
+    );
+    const hasMainFile = withIgnores.files.some((f) => f.fileName === "main.ts");
+
     expect(hasTestFile).toBe(false);
     expect(hasJsonFile).toBe(false);
     expect(hasMainFile).toBe(true);
-    
+
     // Verify the file count decreased
     expect(withIgnores.files.length).toBeLessThan(withoutIgnores.files.length);
   });
@@ -950,44 +957,57 @@ describe("AI Digest Library API", () => {
   it("should apply additionalDefaultIgnores across all three main functions", async () => {
     // Create test files with specific patterns
     await fs.writeFile(path.join(tempDir, "app.ts"), "const app = 'main';");
-    await fs.writeFile(path.join(tempDir, "app.spec.ts"), "describe('app', () => {});");
+    await fs.writeFile(
+      path.join(tempDir, "app.spec.ts"),
+      "describe('app', () => {});"
+    );
     await fs.writeFile(path.join(tempDir, "temp.log"), "log entries");
     await fs.writeFile(path.join(tempDir, ".env"), "SECRET=value");
-    
+
     const additionalIgnores = ["*.spec.ts", "*.log"];
-    
+
     // Test generateDigestFiles
     const filesResult = await generateDigestFiles({
       inputDir: tempDir,
       additionalDefaultIgnores: additionalIgnores,
       silent: true,
     });
-    
+
     // Test generateDigestContent
     const contentResult = await generateDigestContent({
       inputDir: tempDir,
       additionalDefaultIgnores: additionalIgnores,
       silent: true,
     });
-    
+
     // Test getFileStats
     const statsResult = await getFileStats({
       inputDir: tempDir,
       additionalDefaultIgnores: additionalIgnores,
       silent: true,
     });
-    
+
     // Verify all three functions exclude the same files
-    const filesHasSpec = filesResult.files.some(f => f.fileName.endsWith(".spec.ts"));
-    const filesHasLog = filesResult.files.some(f => f.fileName.endsWith(".log"));
-    const filesHasEnv = filesResult.files.some(f => f.fileName === ".env");
-    
-    const contentHasSpec = contentResult.files.some(f => f.fileName.endsWith(".spec.ts"));
-    const contentHasLog = contentResult.files.some(f => f.fileName.endsWith(".log"));
-    
-    const statsHasSpec = statsResult.files.some(f => f.path.endsWith(".spec.ts"));
-    const statsHasLog = statsResult.files.some(f => f.path.endsWith(".log"));
-    
+    const filesHasSpec = filesResult.files.some((f) =>
+      f.fileName.endsWith(".spec.ts")
+    );
+    const filesHasLog = filesResult.files.some((f) =>
+      f.fileName.endsWith(".log")
+    );
+    const filesHasEnv = filesResult.files.some((f) => f.fileName === ".env");
+
+    const contentHasSpec = contentResult.files.some((f) =>
+      f.fileName.endsWith(".spec.ts")
+    );
+    const contentHasLog = contentResult.files.some((f) =>
+      f.fileName.endsWith(".log")
+    );
+
+    const statsHasSpec = statsResult.files.some((f) =>
+      f.path.endsWith(".spec.ts")
+    );
+    const statsHasLog = statsResult.files.some((f) => f.path.endsWith(".log"));
+
     // Spec and log files should be excluded by additionalDefaultIgnores
     expect(filesHasSpec).toBe(false);
     expect(filesHasLog).toBe(false);
@@ -995,18 +1015,18 @@ describe("AI Digest Library API", () => {
     expect(contentHasLog).toBe(false);
     expect(statsHasSpec).toBe(false);
     expect(statsHasLog).toBe(false);
-    
+
     // .env should still be excluded by default ignores
     expect(filesHasEnv).toBe(false);
-    
+
     // All three functions should return the same number of files
     expect(filesResult.files.length).toBe(contentResult.files.length);
     expect(filesResult.files.length).toBe(statsResult.files.length);
-    
+
     // Verify app.ts is included in all results
-    expect(filesResult.files.some(f => f.fileName === "app.ts")).toBe(true);
-    expect(contentResult.files.some(f => f.fileName === "app.ts")).toBe(true);
-    expect(statsResult.files.some(f => f.path === "app.ts")).toBe(true);
+    expect(filesResult.files.some((f) => f.fileName === "app.ts")).toBe(true);
+    expect(contentResult.files.some((f) => f.fileName === "app.ts")).toBe(true);
+    expect(statsResult.files.some((f) => f.path === "app.ts")).toBe(true);
   });
 
   // New tests for minify functionality in library mode
@@ -1014,11 +1034,11 @@ describe("AI Digest Library API", () => {
     // Create test files
     await fs.writeFile(
       path.join(tempDir, "regular.js"),
-      'console.log("Regular");',
+      'console.log("Regular");'
     );
     await fs.writeFile(
       path.join(tempDir, "minified.min.js"),
-      'function min(){console.log("min")}',
+      'function min(){console.log("min")}'
     );
 
     // Create .aidigestminify file
@@ -1038,16 +1058,15 @@ describe("AI Digest Library API", () => {
     // Minified file should have placeholder
     expect(content).toContain("# minified.min.js");
     expect(content).toContain("This is a minified file of type: JS");
-    expect(content).toContain("(File exists but content excluded via .aidigestminify)");
+    expect(content).toContain(
+      "(File exists but content excluded via .aidigestminify)"
+    );
     expect(content).not.toContain('function min(){console.log("min")}');
   });
 
   it("should respect minify patterns with generateDigestFiles", async () => {
     // Create test files
-    await fs.writeFile(
-      path.join(tempDir, "data.json"),
-      '{"key": "value"}',
-    );
+    await fs.writeFile(path.join(tempDir, "data.json"), '{"key": "value"}');
 
     // Create .aidigestminify file
     await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.json");
@@ -1060,24 +1079,17 @@ describe("AI Digest Library API", () => {
 
     const jsonFile = result.files.find((f) => f.fileName === "data.json");
     expect(jsonFile).toBeDefined();
-    expect(jsonFile!.content).toContain("This is a minified file of type: JSON");
+    expect(jsonFile!.content).toContain(
+      "This is a minified file of type: JSON"
+    );
     expect(jsonFile!.content).not.toContain('{"key": "value"}');
   });
 
   it("should include minified count in generateDigestContent stats", async () => {
     // Create test files
-    await fs.writeFile(
-      path.join(tempDir, "regular.txt"),
-      "Regular content",
-    );
-    await fs.writeFile(
-      path.join(tempDir, "minified1.min.js"),
-      "minified JS",
-    );
-    await fs.writeFile(
-      path.join(tempDir, "minified2.min.css"),
-      "minified CSS",
-    );
+    await fs.writeFile(path.join(tempDir, "regular.txt"), "Regular content");
+    await fs.writeFile(path.join(tempDir, "minified1.min.js"), "minified JS");
+    await fs.writeFile(path.join(tempDir, "minified2.min.css"), "minified CSS");
 
     // Create .aidigestminify file
     await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.*");
@@ -1096,11 +1108,12 @@ describe("AI Digest Library API", () => {
     // Create test files
     await fs.writeFile(
       path.join(tempDir, "large.js"),
-      "console.log('This is a large file with lots of content');".repeat(10),
+      "console.log('This is a large file with lots of content');".repeat(10)
     );
     await fs.writeFile(
       path.join(tempDir, "minified.min.js"),
-      "function veryLongMinifiedContentThatWouldNormallyBeLarge(){}" + "x".repeat(1000),
+      "function veryLongMinifiedContentThatWouldNormallyBeLarge(){}" +
+        "x".repeat(1000)
     );
 
     // Create .aidigestminify file
@@ -1114,7 +1127,7 @@ describe("AI Digest Library API", () => {
 
     const minFile = result.files.find((f) => f.path === "minified.min.js");
     expect(minFile).toBeDefined();
-    
+
     // The size should be the placeholder size, not the original file size
     // Placeholder is: "# minified.min.js\n\nThis is a minified file of type: JS\n(File exists but content excluded via .aidigestminify)\n\n"
     expect(minFile!.sizeInBytes).toBeLessThan(200); // Should be much smaller than original
@@ -1128,7 +1141,7 @@ describe("AI Digest Library API", () => {
     // Create test files
     await fs.writeFile(
       path.join(tempDir, "data.csv"),
-      "id,name\n1,John\n2,Jane",
+      "id,name\n1,John\n2,Jane"
     );
 
     // Create custom minify file in config directory
@@ -1145,5 +1158,239 @@ describe("AI Digest Library API", () => {
     expect(content).toContain("# data.csv");
     expect(content).toContain("This is a minified file of type: CSV");
     expect(content).not.toContain("id,name");
+  });
+
+  // New tests for minifyFileDescription callback
+  it("should use minifyFileDescription callback when provided", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "app.min.js"),
+      'function app(){console.log("app")}'
+    );
+    await fs.writeFile(path.join(tempDir, "styles.min.css"), ".btn{color:red}");
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.*");
+
+    // Define custom callback
+    const customCallback: MinifyFileDescriptionCallback = (metadata) => {
+      return (
+        `# ${metadata.displayPath}\n\n` +
+        `Custom minified content for ${metadata.extension.toUpperCase()} file\n` +
+        `File type: ${metadata.fileType}\n` +
+        `This file was minified and excluded.\n\n`
+      );
+    };
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: customCallback,
+      silent: true,
+    });
+
+    // Check that custom callback was used
+    expect(content).toContain("Custom minified content for JS file");
+    expect(content).toContain("Custom minified content for CSS file");
+    expect(content).toContain("This file was minified and excluded");
+
+    // Original default text should not be present
+    expect(content).not.toContain(
+      "(File exists but content excluded via .aidigestminify)"
+    );
+  });
+
+  it("should pass correct metadata to minifyFileDescription callback", async () => {
+    // Create test file
+    await fs.writeFile(
+      path.join(tempDir, "bundle.min.js"),
+      "function bundle(){}"
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    let capturedMetadata: any = null;
+
+    // Define callback that captures metadata
+    const captureCallback: MinifyFileDescriptionCallback = (metadata) => {
+      capturedMetadata = metadata;
+      return metadata.defaultText; // Return default text
+    };
+
+    await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: captureCallback,
+      silent: true,
+    });
+
+    // Verify metadata was captured and has correct properties
+    expect(capturedMetadata).not.toBeNull();
+    expect(capturedMetadata.displayPath).toBe("bundle.min.js");
+    expect(capturedMetadata.extension).toBe("js");
+    expect(capturedMetadata.fileType).toBeDefined();
+    expect(capturedMetadata.filePath).toContain("bundle.min.js");
+    expect(capturedMetadata.defaultText).toContain(
+      "This is a minified file of type: JS"
+    );
+  });
+
+  it("should work with minifyFileDescription in generateDigestFiles", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "lib.min.js"),
+      "var lib=function(){}"
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    // Define custom callback
+    const customCallback: MinifyFileDescriptionCallback = (metadata) => {
+      return `# ${metadata.displayPath}\n\nMinified: ${metadata.extension}\n\n`;
+    };
+
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: customCallback,
+      silent: true,
+    });
+
+    const minFile = result.files.find((f) => f.fileName === "lib.min.js");
+    expect(minFile).toBeDefined();
+    expect(minFile!.content).toBe("# lib.min.js\n\nMinified: js\n\n");
+  });
+
+  it("should work with minifyFileDescription in generateDigestContent", async () => {
+    // Create test files
+    await fs.writeFile(path.join(tempDir, "vendor.min.js"), "var vendor={}");
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    // Define custom callback
+    const customCallback: MinifyFileDescriptionCallback = (_metadata) => {
+      return "Custom minified content\n\n";
+    };
+
+    const { content, stats } = await generateDigestContent({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: customCallback,
+      silent: true,
+    });
+
+    expect(content).toContain("Custom minified content");
+    expect(stats.minifiedCount).toBe(1);
+  });
+
+  it("should work with minifyFileDescription in getFileStats", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "dist.min.js"),
+      "x".repeat(10000) // Large minified file
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    // Define custom callback that returns a longer message
+    const customCallback: MinifyFileDescriptionCallback = (metadata) => {
+      return (
+        `# ${metadata.displayPath}\n\n` +
+        `This is a much longer custom message for minified files.\n` +
+        `It contains more text than the default message to test size calculation.\n` +
+        `File extension: ${metadata.extension}\n` +
+        `File type: ${metadata.fileType}\n\n`
+      );
+    };
+
+    const result = await getFileStats({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: customCallback,
+      silent: true,
+    });
+
+    const minFile = result.files.find((f) => f.path === "dist.min.js");
+    expect(minFile).toBeDefined();
+
+    // The size should reflect the custom callback's output
+    // Should be larger than default placeholder but still much smaller than original
+    expect(minFile!.sizeInBytes).toBeGreaterThan(100); // Custom message is longer
+    expect(minFile!.sizeInBytes).toBeLessThan(500); // But still much smaller than 10000
+  });
+
+  it("should allow returning the default text from minifyFileDescription", async () => {
+    // Create test file
+    await fs.writeFile(path.join(tempDir, "app.min.js"), "function(){}");
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    // Define callback that modifies and returns the default text
+    const modifyCallback: MinifyFileDescriptionCallback = (metadata) => {
+      return (
+        metadata.defaultText + "Additional note: This file was processed.\n"
+      );
+    };
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: modifyCallback,
+      silent: true,
+    });
+
+    // Should contain both default text and additional note
+    expect(content).toContain(
+      "(File exists but content excluded via .aidigestminify)"
+    );
+    expect(content).toContain("Additional note: This file was processed");
+  });
+
+  it("should handle multiple file types with minifyFileDescription", async () => {
+    // Create test files of different types
+    await fs.writeFile(path.join(tempDir, "app.min.js"), "js content");
+    await fs.writeFile(path.join(tempDir, "styles.min.css"), "css content");
+    await fs.writeFile(path.join(tempDir, "data.json"), "{}");
+
+    // Create .aidigestminify file
+    await fs.writeFile(
+      path.join(tempDir, ".aidigestminify"),
+      "*.min.*\n*.json"
+    );
+
+    // Define callback that handles different file types differently
+    const typeCallback: MinifyFileDescriptionCallback = (metadata) => {
+      switch (metadata.extension) {
+        case "js":
+          return `# ${metadata.displayPath}\n\nJavaScript bundle (minified)\n\n`;
+        case "css":
+          return `# ${metadata.displayPath}\n\nCSS bundle (minified)\n\n`;
+        case "json":
+          return `# ${metadata.displayPath}\n\nJSON data file (excluded)\n\n`;
+        default:
+          return metadata.defaultText;
+      }
+    };
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: ".aidigestminify",
+      minifyFileDescription: typeCallback,
+      silent: true,
+    });
+
+    // Check that each file type got its custom message
+    expect(content).toContain("JavaScript bundle (minified)");
+    expect(content).toContain("CSS bundle (minified)");
+    expect(content).toContain("JSON data file (excluded)");
   });
 });
