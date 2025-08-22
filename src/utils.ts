@@ -217,3 +217,43 @@ export function shouldTreatAsBinary(filePath: string): boolean {
     getFileType(filePath) !== "Binary"
   );
 }
+
+// Functions moved from index.ts
+export function getActualWorkingDirectory(): string {
+  // INIT_CWD is set by npm/npx to the directory from which the command was invoked
+  // This is more reliable than process.cwd() when running via npx
+  if (process.env.INIT_CWD) {
+    return process.env.INIT_CWD;
+  }
+
+  return process.cwd();
+}
+
+// Simple debounce function to avoid multiple rebuilds when many files change at once
+export function debounce<F extends (...args: any[]) => any>(
+  func: F,
+  wait: number,
+): (...args: Parameters<F>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function (...args: Parameters<F>) {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+
+    timeout = setTimeout(() => {
+      func(...args);
+      timeout = null;
+    }, wait);
+  };
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function naturalSort(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+}

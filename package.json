@@ -15,10 +15,13 @@
     "start": "ts-node src/index.ts",
     "prepublishOnly": "npm run build",
     "test": "jest --config jest.config.js",
+    "lint": "eslint \"src/**/*.{js,ts}\"",
+    "format": "eslint \"src/**/*.{js,ts}\" --fix",
     "prettier": "prettier --write \"src/**/*.{js,ts,json}\" \"!src/**/*.snap\"",
     "analyze-tokens": "ts-node scripts/analyze-token-ratio.ts",
     "calculate-multiplier": "ts-node scripts/calculate-multiplier.ts",
-    "test-multiplier": "ts-node scripts/test-multiplier.ts"
+    "test-multiplier": "ts-node scripts/test-multiplier.ts",
+    "prepare": "husky"
   },
   "keywords": [
     "cli",
@@ -30,7 +33,12 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint": "^9.34.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.1.5",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
     "tiktoken": "^1.0.18",
@@ -53,5 +61,10 @@
   },
   "bugs": {
     "url": "https://github.com/khromov/ai-digest/issues"
+  },
+  "lint-staged": {
+    "src/**/*.{js,ts}": [
+      "eslint --fix"
+    ]
   }
 }

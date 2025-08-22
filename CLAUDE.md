@@ -8,7 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Test: `npm run test` - Run all Jest tests
 - Single test: `npx jest src/index.test.ts -t "test name"` - Run specific test by name
 - Update snapshots: `npm run test -- -u` - Update Jest snapshots after changes
-- Format: `npm run prettier` - Format code with Prettier (excludes .snap files)
+- Format: `npm run format` - Format code with ESLint auto-fix
+- Format (legacy): `npm run prettier` - Format code with Prettier (excludes .snap files)
+- Lint: `npm run lint` - Check code with ESLint without fixing
 - Publish: `npm run prepublishOnly` - Automatically runs build before publishing
 
 ## Token Analysis Scripts
@@ -134,3 +136,9 @@ All library functions now support the `minifyFile` option for `.aidigestminify` 
 - Add timeout values to Jest tests for file operations (10000-15000ms)
 - Use snapshot testing for complex data structures that should remain stable
 - Binary files should be tested with actual binary data, not mocked content
+
+## Code Quality & Pre-commit Hooks
+- ESLint is configured for TypeScript with basic formatting rules
+- Pre-commit hook automatically runs ESLint fixes on staged files
+- Use `npm run format` for manual code formatting with ESLint
+- Use `npm run lint` to check for linting issues without auto-fixing
