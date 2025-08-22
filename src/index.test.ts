@@ -377,6 +377,108 @@ describe("AI Digest CLI", () => {
       await fs.rm(tempRootDir, { recursive: true, force: true });
     }
   }, 15000);
+
+  // New tests for minify functionality
+  it("should respect .aidigestminify file", async () => {
+    const tempDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-minify-test-"),
+    );
+
+    try {
+      // Create test files
+      await fs.writeFile(
+        path.join(tempDir, "regular.js"),
+        'console.log("Regular file");',
+      );
+      await fs.writeFile(
+        path.join(tempDir, "minified.min.js"),
+        'function min(){console.log("minified")}',
+      );
+      await fs.writeFile(
+        path.join(tempDir, "data.json"),
+        '{"key": "value"}',
+      );
+
+      // Create .aidigestminify file
+      await fs.writeFile(
+        path.join(tempDir, ".aidigestminify"),
+        "*.min.js\n*.json",
+      );
+
+      // Run the CLI
+      const { stdout } = await runCLI(`--input ${tempDir}`);
+
+      // Check output mentions minified files
+      expect(stdout).toContain("Files minified by .aidigestminify:");
+      expect(stdout).toContain("Minify patterns from .aidigestminify:");
+      expect(stdout).toContain("  - *.min.js");
+      expect(stdout).toContain("  - *.json");
+
+      // Read the generated file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, "utf-8");
+
+      // Regular file should have full content
+      expect(content).toContain("# regular.js");
+      expect(content).toContain('console.log("Regular file");');
+
+      // Minified files should have placeholder content
+      expect(content).toContain("# minified.min.js");
+      expect(content).toContain("This is a minified file of type: JS");
+      expect(content).toContain("(File exists but content excluded via .aidigestminify)");
+      expect(content).not.toContain('function min(){console.log("minified")}');
+
+      expect(content).toContain("# data.json");
+      expect(content).toContain("This is a minified file of type: JSON");
+      expect(content).not.toContain('{"key": "value"}');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  }, 15000);
+
+  it("should respect custom minify file with --minify-file flag", async () => {
+    const tempDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ai-digest-custom-minify-test-"),
+    );
+
+    try {
+      // Create test files
+      await fs.writeFile(
+        path.join(tempDir, "regular.js"),
+        'console.log("Regular");',
+      );
+      await fs.writeFile(
+        path.join(tempDir, "exclude.txt"),
+        "Should be minified",
+      );
+
+      // Create custom minify file
+      await fs.writeFile(path.join(tempDir, "custom.minify"), "*.txt");
+
+      // Run the CLI with custom minify file
+      const { stdout } = await runCLI(
+        `--input ${tempDir} --minify-file custom.minify`,
+      );
+
+      // Check output
+      expect(stdout).toContain("Minify patterns from custom.minify:");
+      expect(stdout).toContain("  - *.txt");
+
+      // Read the generated file
+      const codebasePath = path.resolve(process.cwd(), "codebase.md");
+      const content = await fs.readFile(codebasePath, "utf-8");
+
+      // Regular JS should have full content
+      expect(content).toContain('console.log("Regular");');
+
+      // TXT file should be minified
+      expect(content).toContain("# exclude.txt");
+      expect(content).toContain("This is a minified file of type: TXT");
+      expect(content).not.toContain("Should be minified");
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  }, 15000);
 });
 
 // New tests for library functionality
@@ -905,5 +1007,143 @@ describe("AI Digest Library API", () => {
     expect(filesResult.files.some(f => f.fileName === "app.ts")).toBe(true);
     expect(contentResult.files.some(f => f.fileName === "app.ts")).toBe(true);
     expect(statsResult.files.some(f => f.path === "app.ts")).toBe(true);
+  });
+
+  // New tests for minify functionality in library mode
+  it("should respect minify patterns with generateDigest", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "regular.js"),
+      'console.log("Regular");',
+    );
+    await fs.writeFile(
+      path.join(tempDir, "minified.min.js"),
+      'function min(){console.log("min")}',
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: ".aidigestminify",
+      silent: true,
+    });
+
+    // Regular file should have full content
+    expect(content).toContain("# regular.js");
+    expect(content).toContain('console.log("Regular");');
+
+    // Minified file should have placeholder
+    expect(content).toContain("# minified.min.js");
+    expect(content).toContain("This is a minified file of type: JS");
+    expect(content).toContain("(File exists but content excluded via .aidigestminify)");
+    expect(content).not.toContain('function min(){console.log("min")}');
+  });
+
+  it("should respect minify patterns with generateDigestFiles", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "data.json"),
+      '{"key": "value"}',
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.json");
+
+    const result = await generateDigestFiles({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      silent: true,
+    });
+
+    const jsonFile = result.files.find((f) => f.fileName === "data.json");
+    expect(jsonFile).toBeDefined();
+    expect(jsonFile!.content).toContain("This is a minified file of type: JSON");
+    expect(jsonFile!.content).not.toContain('{"key": "value"}');
+  });
+
+  it("should include minified count in generateDigestContent stats", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "regular.txt"),
+      "Regular content",
+    );
+    await fs.writeFile(
+      path.join(tempDir, "minified1.min.js"),
+      "minified JS",
+    );
+    await fs.writeFile(
+      path.join(tempDir, "minified2.min.css"),
+      "minified CSS",
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.*");
+
+    const { stats } = await generateDigestContent({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      silent: true,
+    });
+
+    expect(stats.minifiedCount).toBe(2);
+    expect(stats.includedCount).toBe(6); // 3 original + 3 from beforeEach
+  });
+
+  it("should handle minified files in getFileStats", async () => {
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "large.js"),
+      "console.log('This is a large file with lots of content');".repeat(10),
+    );
+    await fs.writeFile(
+      path.join(tempDir, "minified.min.js"),
+      "function veryLongMinifiedContentThatWouldNormallyBeLarge(){}" + "x".repeat(1000),
+    );
+
+    // Create .aidigestminify file
+    await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.js");
+
+    const result = await getFileStats({
+      inputDir: tempDir,
+      minifyFile: ".aidigestminify",
+      silent: true,
+    });
+
+    const minFile = result.files.find((f) => f.path === "minified.min.js");
+    expect(minFile).toBeDefined();
+    
+    // The size should be the placeholder size, not the original file size
+    // Placeholder is: "# minified.min.js\n\nThis is a minified file of type: JS\n(File exists but content excluded via .aidigestminify)\n\n"
+    expect(minFile!.sizeInBytes).toBeLessThan(200); // Should be much smaller than original
+  });
+
+  it("should use custom minify file location", async () => {
+    // Create a custom directory for config
+    const configDir = path.join(tempDir, "config");
+    await fs.mkdir(configDir);
+
+    // Create test files
+    await fs.writeFile(
+      path.join(tempDir, "data.csv"),
+      "id,name\n1,John\n2,Jane",
+    );
+
+    // Create custom minify file in config directory
+    await fs.writeFile(path.join(configDir, "custom.minify"), "*.csv");
+
+    const content = await generateDigest({
+      inputDir: tempDir,
+      outputFile: null,
+      minifyFile: "config/custom.minify",
+      silent: true,
+    });
+
+    // CSV file should be minified
+    expect(content).toContain("# data.csv");
+    expect(content).toContain("This is a minified file of type: CSV");
+    expect(content).not.toContain("id,name");
   });
 });
