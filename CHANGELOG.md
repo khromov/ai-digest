@@ -1,3 +1,11 @@
+### 1.5.0
+
+- Added `.aidigestminify` file support for including files with placeholder content instead of full content
+- Files matching minify patterns are included but show only file type and a message that content is excluded
+- Added `--minify-file` CLI option to specify custom minify file name
+- Watch mode now monitors `.aidigestminify` file for changes
+- All library functions now support `minifyFile` option
+
 ### 1.2.2
 
 - Bump lockfile

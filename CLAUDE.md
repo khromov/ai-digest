@@ -86,6 +86,32 @@ The multiplier (0.9048) was derived from analysis showing:
 - OpenAI (GPT-4o): 310,641 tokens  
 - Ratio: 0.9048 (OpenAI/Claude)
 
+## Feature: .aidigestminify (v1.5.0)
+Added support for `.aidigestminify` file which works similarly to `.aidigestignore` but instead of excluding files completely, it includes them with a placeholder message. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context.
+
+**How it works:**
+- Create a `.aidigestminify` file with patterns similar to `.gitignore`
+- Files matching these patterns will be included with placeholder content
+- The placeholder shows the file type and indicates the content was excluded
+- Useful for: minified files, compiled code, large data files, database files
+
+**Example patterns:**
+```
+*.min.js
+*.min.css
+dist/*
+build/*
+*.db
+*.sqlite
+```
+
+**Implementation details:**
+- Added `minifyFile` parameter to all core functions
+- Modified `processFiles()` to check minify patterns before processing content
+- Added `minifiedCount` to statistics tracking
+- Watch mode monitors `.aidigestminify` file for changes
+- CLI option `--minify-file` to specify custom minify file name
+
 ## Library Usage
 The tool exports functions for programmatic use:
 - `generateDigest(options)` - Returns content string when `outputFile: null`, writes file otherwise
@@ -93,6 +119,8 @@ The tool exports functions for programmatic use:
 - `generateDigestFiles(options)` - Returns `{ files }` array for custom filtering/processing
 - `getFileStats(options)` - Returns file statistics sorted by size with total token counts, no content
 - `writeDigestToFile(content, outputFile, stats, showOutputFiles, fileSizes)` - File writing utility
+
+All library functions now support the `minifyFile` option for `.aidigestminify` patterns.
 
 ## Code Style & Patterns
 - Use 2 spaces for indentation

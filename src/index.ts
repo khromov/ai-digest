@@ -143,6 +143,7 @@ export async function processFiles(options: {
   useDefaultIgnores?: boolean;
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
+  minifyFile?: string;
   silent?: boolean;
   additionalDefaultIgnores?: string[];
 }): Promise<{
@@ -152,6 +153,7 @@ export async function processFiles(options: {
     includedCount: number;
     defaultIgnoredCount: number;
     customIgnoredCount: number;
+    minifiedCount: number;
     binaryAndSvgFileCount: number;
     includedFiles: string[];
     fileSizeInBytes: number;
@@ -164,6 +166,7 @@ export async function processFiles(options: {
     useDefaultIgnores = true,
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
+    minifyFile = ".aidigestminify",
     silent = false,
     additionalDefaultIgnores = [],
   } = options;
@@ -174,9 +177,11 @@ export async function processFiles(options: {
   try {
     // Object to store ignore patterns for each input directory
     const allIgnorePatterns: Record<string, string[]> = {};
+    const allMinifyPatterns: Record<string, string[]> = {};
 
     for (const dir of directories) {
       allIgnorePatterns[dir] = await readIgnoreFile(dir, ignoreFile, silent);
+      allMinifyPatterns[dir] = await readIgnoreFile(dir, minifyFile, silent);
     }
 
     const defaultIgnore = useDefaultIgnores
@@ -185,12 +190,27 @@ export async function processFiles(options: {
 
     // Create custom ignore filter for each directory
     const customIgnores: Record<string, IgnoreInstance> = {};
+    const customMinifies: Record<string, IgnoreInstance> = {};
+    
     for (const dir of directories) {
       customIgnores[dir] = createIgnoreFilter(
         allIgnorePatterns[dir],
         ignoreFile,
         silent,
       );
+      
+      // Create minify filter using the same createIgnoreFilter function
+      if (allMinifyPatterns[dir].length > 0) {
+        customMinifies[dir] = ignore().add(allMinifyPatterns[dir]);
+        if (!silent) {
+          console.log(formatLog(`Minify patterns from ${minifyFile}:`, "📦"));
+          allMinifyPatterns[dir].forEach((pattern) => {
+            console.log(`  - ${pattern}`);
+          });
+        }
+      } else {
+        customMinifies[dir] = ignore();
+      }
     }
 
     if (!silent) {
@@ -261,6 +281,7 @@ export async function processFiles(options: {
     let includedCount = 0;
     let defaultIgnoredCount = 0;
     let customIgnoredCount = 0;
+    let minifiedCount = 0;
     let binaryAndSvgFileCount = 0;
     let includedFiles: string[] = [];
     let fileSizes: Record<string, number> = {};
@@ -298,8 +319,23 @@ export async function processFiles(options: {
         fileSizes[displayPath] = stats.size;
 
         let fileContent = "";
+        
+        // Check if file should be minified
+        const shouldMinify = customMinifies[sourceDir].ignores(relativePath);
 
-        if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
+        if (shouldMinify) {
+          // Treat as minified - similar to binary but with different message
+          const fileType = getFileType(fullPath);
+          const extension = path.extname(relativePath).slice(1) || "unknown";
+          
+          fileContent = `# ${displayPath}\n\n`;
+          fileContent += `This is a minified file of type: ${extension.toUpperCase()}\n`;
+          fileContent += `(File exists but content excluded via .aidigestminify)\n\n`;
+          
+          minifiedCount++;
+          includedCount++;
+          includedFiles.push(displayPath);
+        } else if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(relativePath);
 
@@ -357,6 +393,7 @@ export async function processFiles(options: {
         includedCount,
         defaultIgnoredCount,
         customIgnoredCount,
+        minifiedCount,
         binaryAndSvgFileCount,
         includedFiles,
         fileSizeInBytes: totalContentSize,
@@ -378,6 +415,7 @@ export async function generateDigestContent(options: {
   useDefaultIgnores?: boolean;
   removeWhitespaceFlag?: boolean;
   ignoreFile?: string;
+  minifyFile?: string;
   silent?: boolean;
   additionalDefaultIgnores?: string[];
 }): Promise<{
@@ -388,6 +426,7 @@ export async function generateDigestContent(options: {
     includedCount: number;
     defaultIgnoredCount: number;
     customIgnoredCount: number;
+    minifiedCount: number;
     binaryAndSvgFileCount: number;
     includedFiles: string[];
     estimatedTokens: number;
@@ -440,6 +479,7 @@ export async function writeDigestToFile(
     includedCount: number;
     defaultIgnoredCount: number;
     customIgnoredCount: number;
+    minifiedCount?: number;
     binaryAndSvgFileCount: number;
     includedFiles: string[];
     estimatedTokens: number;
@@ -498,6 +538,15 @@ export async function writeDigestToFile(
       );
     }
 
+    if (stats.minifiedCount && stats.minifiedCount > 0) {
+      console.log(
+        formatLog(
+          `Files minified by .aidigestminify: ${stats.minifiedCount}`,
+          "📦",
+        ),
+      );
+    }
+
     console.log(
       formatLog(
         `Binary and SVG files included: ${stats.binaryAndSvgFileCount}`,
@@ -520,7 +569,7 @@ export async function writeDigestToFile(
       );
       console.log(
         formatLog(
-          "Consider adding more files to .aidigestignore to reduce the output size.",
+          "Consider adding more files to .aidigestignore or .aidigestminify to reduce the output size.",
           "💡",
         ),
       );
@@ -571,6 +620,7 @@ async function watchFiles(
   removeWhitespaceFlag: boolean,
   showOutputFiles: string | boolean,
   ignoreFile: string,
+  minifyFile: string,
   testMode: boolean = false,
 ): Promise<void> {
   try {
@@ -583,6 +633,7 @@ async function watchFiles(
       removeWhitespaceFlag,
       showOutputFiles,
       ignoreFile,
+      minifyFile,
     );
     isWritingFile = false;
 
@@ -595,12 +646,19 @@ async function watchFiles(
       return;
     }
 
-    // Read ignore patterns for each input directory
+    // Read ignore and minify patterns for each input directory
     const allIgnorePatterns: Record<string, string[]> = {};
+    const allMinifyPatterns: Record<string, string[]> = {};
+    
     for (const inputDir of inputDirs) {
       allIgnorePatterns[inputDir] = await readIgnoreFile(
         inputDir,
         ignoreFile,
+        true,
+      );
+      allMinifyPatterns[inputDir] = await readIgnoreFile(
+        inputDir,
+        minifyFile,
         true,
       );
     }
@@ -609,14 +667,17 @@ async function watchFiles(
       ? ignore().add(DEFAULT_IGNORES)
       : ignore();
 
-    // Create custom ignore filter for each directory
+    // Create custom ignore and minify filters for each directory
     const customIgnores: Record<string, IgnoreInstance> = {};
+    const customMinifies: Record<string, IgnoreInstance> = {};
+    
     for (const inputDir of inputDirs) {
       customIgnores[inputDir] = createIgnoreFilter(
         allIgnorePatterns[inputDir],
         ignoreFile,
         true,
       );
+      customMinifies[inputDir] = ignore().add(allMinifyPatterns[inputDir]);
     }
 
     // Function to determine if a file should be ignored
@@ -680,6 +741,7 @@ async function watchFiles(
           removeWhitespaceFlag,
           showOutputFiles,
           ignoreFile,
+          minifyFile,
         );
         isWritingFile = false;
         console.log(
@@ -722,12 +784,14 @@ async function watchFiles(
       watchers.push(watcher);
     }
 
-    // Also watch the ignore files themselves for changes
-    const ignoreWatchers: chokidar.FSWatcher[] = [];
+    // Also watch the ignore and minify files themselves for changes
+    const configWatchers: chokidar.FSWatcher[] = [];
 
     for (const inputDir of inputDirs) {
       const ignoreFilePath = path.join(inputDir, ignoreFile);
+      const minifyFilePath = path.join(inputDir, minifyFile);
 
+      // Watch ignore file if it exists
       try {
         const ignoreFileExists = await fs
           .access(ignoreFilePath)
@@ -751,11 +815,44 @@ async function watchFiles(
             debouncedRebuild();
           });
 
-          ignoreWatchers.push(ignoreWatcher);
+          configWatchers.push(ignoreWatcher);
         }
       } catch (error) {
         console.error(
           formatLog(`Error watching ${ignoreFile} in ${inputDir}:`, "❌"),
+          error,
+        );
+      }
+
+      // Watch minify file if it exists
+      try {
+        const minifyFileExists = await fs
+          .access(minifyFilePath)
+          .then(() => true)
+          .catch(() => false);
+
+        if (minifyFileExists) {
+          // Create a separate watcher just for the minify file
+          const minifyWatcher = chokidar.watch(minifyFilePath, {
+            persistent: true,
+            ignoreInitial: true,
+          });
+
+          minifyWatcher.on("change", () => {
+            console.log(
+              formatLog(
+                `${minifyFile} in ${inputDir} changed, updating minify patterns...`,
+                "📄",
+              ),
+            );
+            debouncedRebuild();
+          });
+
+          configWatchers.push(minifyWatcher);
+        }
+      } catch (error) {
+        console.error(
+          formatLog(`Error watching ${minifyFile} in ${inputDir}:`, "❌"),
           error,
         );
       }
@@ -807,6 +904,7 @@ async function aggregateFiles(
   removeWhitespaceFlag: boolean,
   showOutputFiles: string | boolean,
   ignoreFile: string,
+  minifyFile: string = ".aidigestminify",
 ): Promise<void> {
   try {
     const { content, files, stats } = await generateDigestContent({
@@ -815,6 +913,7 @@ async function aggregateFiles(
       useDefaultIgnores,
       removeWhitespaceFlag,
       ignoreFile,
+      minifyFile,
       silent: false,
     });
 
@@ -846,6 +945,7 @@ export async function generateDigest(
     useDefaultIgnores?: boolean;
     removeWhitespaceFlag?: boolean;
     ignoreFile?: string;
+    minifyFile?: string;
     showOutputFiles?: boolean | string;
     silent?: boolean;
   } = {},
@@ -857,6 +957,7 @@ export async function generateDigest(
     useDefaultIgnores = true,
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
+    minifyFile = ".aidigestminify",
     showOutputFiles = false,
     silent = false,
   } = options;
@@ -880,6 +981,7 @@ export async function generateDigest(
     useDefaultIgnores,
     removeWhitespaceFlag,
     ignoreFile,
+    minifyFile,
     silent,
   });
 
@@ -901,6 +1003,7 @@ export async function generateDigestFiles(
     useDefaultIgnores?: boolean;
     removeWhitespaceFlag?: boolean;
     ignoreFile?: string;
+    minifyFile?: string;
     silent?: boolean;
     additionalDefaultIgnores?: string[];
   } = {},
@@ -912,6 +1015,7 @@ export async function generateDigestFiles(
     useDefaultIgnores = true,
     removeWhitespaceFlag = false,
     ignoreFile = ".aidigestignore",
+    minifyFile = ".aidigestminify",
     silent = false,
     additionalDefaultIgnores = [],
   } = options;
@@ -935,6 +1039,7 @@ export async function generateDigestFiles(
     useDefaultIgnores,
     removeWhitespaceFlag,
     ignoreFile,
+    minifyFile,
     silent,
     additionalDefaultIgnores,
   });
@@ -968,6 +1073,11 @@ if (require.main === module) {
       "Custom ignore file name",
       ".aidigestignore",
     )
+    .option(
+      "--minify-file <file>",
+      "Custom minify file name",
+      ".aidigestminify",
+    )
     .option("--watch", "Watch for file changes and rebuild automatically")
     .action(async (options) => {
       const inputDirs = options.input.map((dir: string) => path.resolve(dir));
@@ -984,6 +1094,7 @@ if (require.main === module) {
           options.whitespaceRemoval,
           options.showOutputFiles,
           options.ignoreFile,
+          options.minifyFile,
           process.env.NODE_ENV === "test", // Pass test mode flag based on environment
         );
       } else {
@@ -995,6 +1106,7 @@ if (require.main === module) {
           options.whitespaceRemoval,
           options.showOutputFiles,
           options.ignoreFile,
+          options.minifyFile,
         );
       }
     });
@@ -1010,6 +1122,7 @@ export async function getFileStats(
     outputFile?: string | null;
     useDefaultIgnores?: boolean;
     ignoreFile?: string;
+    minifyFile?: string;
     silent?: boolean;
     additionalDefaultIgnores?: string[];
   } = {},
@@ -1027,6 +1140,7 @@ export async function getFileStats(
     outputFile = null,
     useDefaultIgnores = true,
     ignoreFile = ".aidigestignore",
+    minifyFile = ".aidigestminify",
     silent = true,
     additionalDefaultIgnores = [],
   } = options;
@@ -1050,6 +1164,7 @@ export async function getFileStats(
     useDefaultIgnores,
     removeWhitespaceFlag: false,
     ignoreFile,
+    minifyFile,
     silent,
     additionalDefaultIgnores,
   });

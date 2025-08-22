@@ -6,9 +6,9 @@ A CLI tool to aggregate your codebase into a single Markdown file for use with C
 
 Start by running the CLI tool in your project directory:
 
-```bash
+\`\`\`bash
 npx ai-digest
-```
+\`\`\`
 
 This will generate a `codebase.md` file with your codebase.
 
@@ -22,6 +22,7 @@ Once you've generated the Markdown file containing your codebase, you can use it
 - Provides options for whitespace removal and custom ignore patterns
 - View file size statistics with visual bar charts
 - Watch mode for automatic rebuilding when files change
+- Minify file support for including files with placeholder content
 
 ### With ChatGPT:
 
@@ -43,6 +44,7 @@ For best results, re-upload the Markdown file before starting a new chat session
 - `--whitespace-removal`: Enable whitespace removal
 - `--show-output-files [sort]`: Display a list of files with size statistics and bar charts. Add `sort` to sort by file size.
 - `--ignore-file <file>`: Specify a custom ignore file (default: .aidigestignore)
+- `--minify-file <file>`: Specify a custom minify file (default: .aidigestminify)
 - `--watch`: Enable watch mode to automatically rebuild when files change
 - `--help`: Show help
 
@@ -52,55 +54,55 @@ For best results, re-upload the Markdown file before starting a new chat session
 
 1. Basic usage:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest
-   ```
+   \`\`\`
 
 2. Specify input and output:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest -i /path/to/your/project -o project_summary.md
-   ```
+   \`\`\`
 
 3. Enable whitespace removal:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest --whitespace-removal
-   ```
+   \`\`\`
 
 4. Show files included with size statistics:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest --show-output-files
-   ```
+   \`\`\`
 
 5. Show files sorted by size (largest first):
 
-   ```bash
+   \`\`\`bash
    npx ai-digest --show-output-files sort
-   ```
+   \`\`\`
 
 6. Watch mode:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest --watch
-   ```
+   \`\`\`
 
 7. Combine multiple options:
 
-   ```bash
+   \`\`\`bash
    npx ai-digest -i /path/to/your/project -o project_summary.md --whitespace-removal --show-output-files sort --watch
-   ```
+   \`\`\`
 
 ### Library Usage
 
 ai-digest can also be used as a library in your Node.js projects:
 
-```bash
+\`\`\`bash
 npm install ai-digest
-```
+\`\`\`
 
-```javascript
+\`\`\`javascript
 import aiDigest from 'ai-digest';
 
 // Generate digest content as a string
@@ -127,7 +129,7 @@ const { files } = await aiDigest.generateDigestFiles({
 // Each file has: { fileName: string, content: string }
 // Content format is identical to generateDigest() but per-file
 console.log(files[0].fileName);  // e.g., "index.ts"
-console.log(files[0].content);   // "# index.ts\n\n```ts\n// file content...\n```\n\n"
+console.log(files[0].content);   // "# index.ts\n\n\`\`\`ts\n// file content...\n\`\`\`\n\n"
 
 // Apply custom filtering after processing
 const jsFiles = files.filter(file => file.fileName.endsWith('.js'));
@@ -150,7 +152,7 @@ console.log(stats);
 //   totalGptTokens: 5850,
 //   totalClaudeTokens: 6284
 // }
-```
+\`\`\`
 
 **Available functions:**
 - `generateDigest(options)` - Main function for generating digests
@@ -164,6 +166,37 @@ console.log(stats);
 ai-digest supports custom ignore patterns using a `.aidigestignore` file in the root directory of your project. This file works similarly to `.gitignore`, allowing you to specify files and directories that should be excluded from the aggregation.
 
 Use the `--show-output-files` flag to see which files are being included, making it easier to identify candidates for exclusion.
+
+## Custom Minify Patterns
+
+ai-digest supports custom minify patterns using a `.aidigestminify` file in the root directory of your project. This file works similarly to `.aidigestignore`, but instead of excluding files completely, it includes them with a placeholder message indicating the file exists but its content is not included in the codebase dump. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context.
+
+Example `.aidigestminify` file:
+\`\`\`
+# Minified JavaScript files
+*.min.js
+*.min.css
+
+# Large generated files
+dist/*
+build/*
+
+# Database files
+*.db
+*.sqlite
+
+# Large data files
+*.csv
+*.json
+\`\`\`
+
+When a file matches a minify pattern, it will appear in the output like this:
+\`\`\`
+# dist/bundle.min.js
+
+This is a minified file of type: JS
+(File exists but content excluded via .aidigestminify)
+\`\`\`
 
 ## Whitespace Removal
 
@@ -180,6 +213,7 @@ When using the `--watch` flag, ai-digest will continuously monitor your files fo
 The watch mode:
 
 - Respects all ignore patterns (both default and custom)
+- Respects minify patterns from `.aidigestminify`
 - Rebuilds only when non-ignored files change
 - Includes a debounce mechanism to avoid multiple rebuilds when many files change at once
 - Can be terminated with Ctrl+C
@@ -194,9 +228,9 @@ To pass flags to the CLI, use the `--` flag, like this: `npm run start -- --whit
 
 ## Deploy New Version
 
-```
+\`\`\`
 npm publish
-```
+\`\`\`
 
 ## Contributing
 
