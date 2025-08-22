@@ -22,6 +22,7 @@ export const WHITESPACE_DEPENDENT_EXTENSIONS = [
 
 export const DEFAULT_IGNORES = [
   ".aidigestignore",
+  ".aidigestminify",
   // Node.js
   "node_modules",
   "package-lock.json",
