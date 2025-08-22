@@ -31,6 +31,7 @@
   "author": "Stanislav Khromov",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.34.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
@@ -44,7 +45,8 @@
     "tiktoken": "^1.0.18",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.40.0"
   },
   "dependencies": {
     "@anthropic-ai/tokenizer": "^0.0.4",

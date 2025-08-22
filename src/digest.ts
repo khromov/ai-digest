@@ -69,7 +69,7 @@ export function displayIncludedFiles(
     0,
   );
 
-  let displayFiles = [...includedFiles];
+  const displayFiles = [...includedFiles];
   if (sortBySize) {
     displayFiles.sort((a, b) => fileSizes[b] - fileSizes[a]);
     console.log(formatLog("Files sorted by size (largest first)", "📊"));
@@ -198,7 +198,7 @@ export async function processFiles(options: {
       sourceDir: string;
     };
 
-    let allFileEntries: FileEntry[] = [];
+    const allFileEntries: FileEntry[] = [];
 
     // Collect files from all input directories
     for (const inputDir of directories) {
@@ -242,9 +242,9 @@ export async function processFiles(options: {
     let customIgnoredCount = 0;
     let minifiedCount = 0;
     let binaryAndSvgFileCount = 0;
-    let includedFiles: string[] = [];
-    let fileSizes: Record<string, number> = {};
-    let processedFiles: ProcessedFile[] = [];
+    const includedFiles: string[] = [];
+    const fileSizes: Record<string, number> = {};
+    const processedFiles: ProcessedFile[] = [];
 
     // Sort the files in natural path order
     allFileEntries.sort((a, b) => naturalSort(a.relativePath, b.relativePath));
@@ -290,7 +290,7 @@ export async function processFiles(options: {
           // Create default text
           let defaultText = `# ${displayPath}\n\n`;
           defaultText += `This is a minified file of type: ${extension.toUpperCase()}\n`;
-          defaultText += `(File exists but content excluded via .aidigestminify)\n\n`;
+          defaultText += "(File exists but content excluded via .aidigestminify)\n\n";
           
           // Use callback if provided, otherwise use default
           if (minifyFileDescription) {
@@ -312,9 +312,9 @@ export async function processFiles(options: {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(relativePath);
 
-          if (content.includes('\u0000')) {
+          if (content.includes("\u0000")) {
             // console.warn(formatLog(`Warning: File ${relativePath} contains null bytes.`, '⚠️'));
-            content = content.replace(/\u0000/g, ''); // Remove null bytes
+            content = content.replace(/\u0000/g, ""); // Remove null bytes
           }
 
           content = escapeTripleBackticks(content);
