@@ -45,8 +45,10 @@ The architecture supports two usage patterns:
 5. **Output Generation**: Combines processed files into a single markdown document
 
 ### Key Components
-- `src/index.ts` - Main entry point containing CLI logic, library exports, and core processing functions
+- `src/index.ts` - Main entry point containing CLI logic and library exports
+- `src/digest.ts` - Core processing functions for file discovery, content processing, and output generation
 - `src/utils.ts` - Utility functions for file processing, token counting, ignore patterns, and file type detection
+- `src/types.ts` - TypeScript type definitions for the project
 - `src/index.test.ts` - Comprehensive test suite covering both CLI and library functionality
 - `scripts/` - Analysis and utility scripts for token counting research
 
