@@ -33,7 +33,7 @@ let isWritingFile = false;
 export async function readIgnoreFile(
   inputDir: string,
   filename: string,
-  silent: boolean = false,
+  silent: boolean = false
 ): Promise<string[]> {
   try {
     const filePath = path.join(inputDir, filename);
@@ -48,7 +48,7 @@ export async function readIgnoreFile(
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       if (!silent) {
         console.log(
-          formatLog(`No ${filename} file found in ${inputDir}.`, "❓"),
+          formatLog(`No ${filename} file found in ${inputDir}.`, "❓")
         );
       }
       return [];
@@ -60,13 +60,13 @@ export async function readIgnoreFile(
 export function displayIncludedFiles(
   includedFiles: string[],
   fileSizes: Record<string, number>,
-  sortBySize: boolean = false,
+  sortBySize: boolean = false
 ): void {
   console.log(formatLog("Files included in the output:", "📋"));
 
   const totalSize = Object.values(fileSizes).reduce(
     (sum, size) => sum + size,
-    0,
+    0
   );
 
   const displayFiles = [...includedFiles];
@@ -77,7 +77,7 @@ export function displayIncludedFiles(
 
   const maxFileNameLength = Math.min(
     60, // Cap at 60 characters to prevent very long lines
-    displayFiles.reduce((max, file) => Math.max(max, file.length), 0),
+    displayFiles.reduce((max, file) => Math.max(max, file.length), 0)
   );
 
   displayFiles.forEach((file, index) => {
@@ -87,7 +87,7 @@ export function displayIncludedFiles(
     const bar = "█".repeat(barLength);
 
     console.log(
-      `${(index + 1).toString().padEnd(4)}${file.padEnd(maxFileNameLength + 2)}${formatFileSize(size).padEnd(10)}(${percentage.toFixed(1).padStart(4)}%) ${bar}`,
+      `${(index + 1).toString().padEnd(4)}${file.padEnd(maxFileNameLength + 2)}${formatFileSize(size).padEnd(10)}(${percentage.toFixed(1).padStart(4)}%) ${bar}`
     );
   });
 }
@@ -150,14 +150,14 @@ export async function processFiles(options: {
     // Create custom ignore filter for each directory
     const customIgnores: Record<string, IgnoreInstance> = {};
     const customMinifies: Record<string, IgnoreInstance> = {};
-    
+
     for (const dir of directories) {
       customIgnores[dir] = createIgnoreFilter(
         allIgnorePatterns[dir],
         ignoreFile,
-        silent,
+        silent
       );
-      
+
       // Create minify filter using the same createIgnoreFilter function
       if (allMinifyPatterns[dir].length > 0) {
         customMinifies[dir] = ignore().add(allMinifyPatterns[dir]);
@@ -183,8 +183,8 @@ export async function processFiles(options: {
         console.log(
           formatLog(
             "Whitespace removal enabled (except for whitespace-dependent languages).",
-            "🧹",
-          ),
+            "🧹"
+          )
         );
       } else {
         console.log(formatLog("Whitespace removal disabled.", "📝"));
@@ -214,7 +214,7 @@ export async function processFiles(options: {
 
       if (!silent) {
         console.log(
-          formatLog(`Found ${dirFiles.length} files in ${inputDir}`, "🔍"),
+          formatLog(`Found ${dirFiles.length} files in ${inputDir}`, "🔍")
         );
       }
 
@@ -232,8 +232,8 @@ export async function processFiles(options: {
       console.log(
         formatLog(
           `Total files found across all directories: ${allFileEntries.length}`,
-          "🔍",
-        ),
+          "🔍"
+        )
       );
     }
 
@@ -278,7 +278,7 @@ export async function processFiles(options: {
         fileSizes[displayPath] = stats.size;
 
         let fileContent = "";
-        
+
         // Check if file should be minified
         const shouldMinify = customMinifies[sourceDir].ignores(relativePath);
 
@@ -286,15 +286,13 @@ export async function processFiles(options: {
           // Treat as minified - similar to binary but with different message
           const fileType = getFileType(fullPath);
           const extension = path.extname(relativePath).slice(1) || "unknown";
-          
+
           // Create default text
           const defaultText = `# ${displayPath}
 
-This is a minified file of type: ${extension.toUpperCase()}
-(File exists but content excluded via .aidigestminify)
-
+This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "unknown"}. The file exists but has been excluded from the codebase digest.
 `;
-          
+
           // Use callback if provided, otherwise use default
           if (minifyFileDescription) {
             fileContent = minifyFileDescription({
@@ -307,11 +305,14 @@ This is a minified file of type: ${extension.toUpperCase()}
           } else {
             fileContent = defaultText;
           }
-          
+
           minifiedCount++;
           includedCount++;
           includedFiles.push(displayPath);
-        } else if ((await isTextFile(fullPath)) && !shouldTreatAsBinary(fullPath)) {
+        } else if (
+          (await isTextFile(fullPath)) &&
+          !shouldTreatAsBinary(fullPath)
+        ) {
           let content = await fs.readFile(fullPath, "utf-8");
           const extension = path.extname(relativePath);
 
@@ -359,7 +360,7 @@ This is a minified file of type: ${extension.toUpperCase()}
 
     const totalContentSize = processedFiles.reduce(
       (sum, file) => sum + Buffer.byteLength(file.content),
-      0,
+      0
     );
 
     return {
@@ -463,7 +464,7 @@ export async function writeDigestToFile(
     fileSizeInBytes: number;
   },
   showOutputFiles: string | boolean = false,
-  fileSizes?: Record<string, number>,
+  fileSizes?: Record<string, number>
 ): Promise<void> {
   try {
     const outputPath = path.isAbsolute(outputFile)
@@ -490,19 +491,19 @@ export async function writeDigestToFile(
     await fs.rename(tempFile, outputPath);
 
     console.log(
-      formatLog(`Files aggregated successfully into ${outputFile}`, "✅"),
+      formatLog(`Files aggregated successfully into ${outputFile}`, "✅")
     );
     console.log(formatLog(`Total files found: ${stats.totalFiles}`, "📚"));
     console.log(
-      formatLog(`Files included in output: ${stats.includedCount}`, "📎"),
+      formatLog(`Files included in output: ${stats.includedCount}`, "📎")
     );
 
     if (stats.defaultIgnoredCount > 0) {
       console.log(
         formatLog(
           `Files ignored by default patterns: ${stats.defaultIgnoredCount}`,
-          "🚫",
-        ),
+          "🚫"
+        )
       );
     }
 
@@ -510,8 +511,8 @@ export async function writeDigestToFile(
       console.log(
         formatLog(
           `Files ignored by .aidigestignore: ${stats.customIgnoredCount}`,
-          "🚫",
-        ),
+          "🚫"
+        )
       );
     }
 
@@ -519,36 +520,36 @@ export async function writeDigestToFile(
       console.log(
         formatLog(
           `Files minified by .aidigestminify: ${stats.minifiedCount}`,
-          "📦",
-        ),
+          "📦"
+        )
       );
     }
 
     console.log(
       formatLog(
         `Binary and SVG files included: ${stats.binaryAndSvgFileCount}`,
-        "📦",
-      ),
+        "📦"
+      )
     );
 
     if (stats.fileSizeInBytes > MAX_FILE_SIZE) {
       console.log(
         formatLog(
           `Warning: Output file size (${(stats.fileSizeInBytes / 1024 / 1024).toFixed(2)} MB) exceeds 10 MB.`,
-          "⚠️",
-        ),
+          "⚠️"
+        )
       );
       console.log(
         formatLog(
           "Token count estimation skipped due to large file size.",
-          "⚠️",
-        ),
+          "⚠️"
+        )
       );
       console.log(
         formatLog(
           "Consider adding more files to .aidigestignore or .aidigestminify to reduce the output size.",
-          "💡",
-        ),
+          "💡"
+        )
       );
     } else {
       const tokenCounts = estimateTokenCount(content);
@@ -560,18 +561,18 @@ export async function writeDigestToFile(
         console.log(
           formatLog(
             `Estimated token counts - Claude models: ~${tokenCounts.claudeTokens} tokens, GPT-4: ~${tokenCounts.gptTokens} tokens`,
-            "🔢",
-          ),
+            "🔢"
+          )
         );
       } else {
         console.log(
-          formatLog(`Estimated token count: ${stats.estimatedTokens}`, "🔢"),
+          formatLog(`Estimated token count: ${stats.estimatedTokens}`, "🔢")
         );
         console.log(
           formatLog(
             "Note: Token count is an approximation using GPT-4 tokenizer. For ChatGPT, it should be accurate. For Claude, it may be ±20% approximately.",
-            "⚠️",
-          ),
+            "⚠️"
+          )
         );
       }
     }
@@ -598,7 +599,7 @@ export async function watchFiles(
   showOutputFiles: string | boolean,
   ignoreFile: string,
   minifyFile: string,
-  testMode: boolean = false,
+  testMode: boolean = false
 ): Promise<void> {
   try {
     // First, run the initial aggregation
@@ -610,12 +611,12 @@ export async function watchFiles(
       removeWhitespaceFlag,
       showOutputFiles,
       ignoreFile,
-      minifyFile,
+      minifyFile
     );
     isWritingFile = false;
 
     console.log(
-      formatLog("Watch mode enabled. Waiting for file changes...", "👀"),
+      formatLog("Watch mode enabled. Waiting for file changes...", "👀")
     );
 
     // Exit early if in test mode to prevent hanging test
@@ -626,17 +627,17 @@ export async function watchFiles(
     // Read ignore and minify patterns for each input directory
     const allIgnorePatterns: Record<string, string[]> = {};
     const allMinifyPatterns: Record<string, string[]> = {};
-    
+
     for (const inputDir of inputDirs) {
       allIgnorePatterns[inputDir] = await readIgnoreFile(
         inputDir,
         ignoreFile,
-        true,
+        true
       );
       allMinifyPatterns[inputDir] = await readIgnoreFile(
         inputDir,
         minifyFile,
-        true,
+        true
       );
     }
 
@@ -647,12 +648,12 @@ export async function watchFiles(
     // Create custom ignore and minify filters for each directory
     const customIgnores: Record<string, IgnoreInstance> = {};
     const customMinifies: Record<string, IgnoreInstance> = {};
-    
+
     for (const inputDir of inputDirs) {
       customIgnores[inputDir] = createIgnoreFilter(
         allIgnorePatterns[inputDir],
         ignoreFile,
-        true,
+        true
       );
       customMinifies[inputDir] = ignore().add(allMinifyPatterns[inputDir]);
     }
@@ -718,11 +719,11 @@ export async function watchFiles(
           removeWhitespaceFlag,
           showOutputFiles,
           ignoreFile,
-          minifyFile,
+          minifyFile
         );
         isWritingFile = false;
         console.log(
-          formatLog("Rebuild complete. Waiting for more changes...", "✅"),
+          formatLog("Rebuild complete. Waiting for more changes...", "✅")
         );
       } catch (error) {
         isWritingFile = false;
@@ -752,7 +753,7 @@ export async function watchFiles(
         if (!shouldIgnorePath(filePath)) {
           const relativePath = path.relative(inputDir, filePath);
           console.log(
-            formatLog(`${event}: ${relativePath} in ${inputDir}`, "🔄"),
+            formatLog(`${event}: ${relativePath} in ${inputDir}`, "🔄")
           );
           debouncedRebuild();
         }
@@ -786,8 +787,8 @@ export async function watchFiles(
             console.log(
               formatLog(
                 `${ignoreFile} in ${inputDir} changed, updating ignore patterns...`,
-                "📄",
-              ),
+                "📄"
+              )
             );
             debouncedRebuild();
           });
@@ -797,7 +798,7 @@ export async function watchFiles(
       } catch (error) {
         console.error(
           formatLog(`Error watching ${ignoreFile} in ${inputDir}:`, "❌"),
-          error,
+          error
         );
       }
 
@@ -819,8 +820,8 @@ export async function watchFiles(
             console.log(
               formatLog(
                 `${minifyFile} in ${inputDir} changed, updating minify patterns...`,
-                "📄",
-              ),
+                "📄"
+              )
             );
             debouncedRebuild();
           });
@@ -830,7 +831,7 @@ export async function watchFiles(
       } catch (error) {
         console.error(
           formatLog(`Error watching ${minifyFile} in ${inputDir}:`, "❌"),
-          error,
+          error
         );
       }
     }
@@ -839,7 +840,7 @@ export async function watchFiles(
     process.on("SIGINT", () => {
       if (isWritingFile) {
         console.log(
-          formatLog("Write in progress, waiting to complete...", "⏳"),
+          formatLog("Write in progress, waiting to complete...", "⏳")
         );
 
         // Set up a maximum wait time of 2 seconds
@@ -854,7 +855,7 @@ export async function watchFiles(
             clearTimeout(forceExitTimeout);
             clearInterval(checkInterval);
             console.log(
-              formatLog("Write complete. Watch mode terminated.", "👋"),
+              formatLog("Write complete. Watch mode terminated.", "👋")
             );
             process.exit(0);
           }
@@ -881,7 +882,7 @@ export async function aggregateFiles(
   removeWhitespaceFlag: boolean,
   showOutputFiles: string | boolean,
   ignoreFile: string,
-  minifyFile: string = ".aidigestminify",
+  minifyFile: string = ".aidigestminify"
 ): Promise<void> {
   try {
     const { content, files, stats } = await generateDigestContent({
@@ -905,7 +906,7 @@ export async function aggregateFiles(
       outputFile,
       stats,
       showOutputFiles,
-      fileSizes,
+      fileSizes
     );
   } catch (error) {
     console.error(formatLog("Error aggregating files:", "❌"), error);
@@ -925,7 +926,7 @@ export async function getFileStats(
     minifyFileDescription?: MinifyFileDescriptionCallback;
     silent?: boolean;
     additionalDefaultIgnores?: string[];
-  } = {},
+  } = {}
 ): Promise<{
   files: Array<{
     path: string;
