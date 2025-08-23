@@ -288,7 +288,7 @@ export async function processFiles(options: {
           const extension = path.extname(relativePath).slice(1) || "unknown";
           
           // Create default text
-          let defaultText = `# ${displayPath}
+          const defaultText = `# ${displayPath}
 
 This is a minified file of type: ${extension.toUpperCase()}
 (File exists but content excluded via .aidigestminify)
