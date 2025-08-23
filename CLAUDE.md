@@ -5,10 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 - Build: `npm run build` - Compiles TypeScript code to dist/
 - Start: `npm run start` - Run the application with ts-node for development
-- Test: `npm run test` - Run all Jest tests
-- Single test: `npx jest src/index.test.ts -t "test name"` - Run specific test by name
+- Test: `npm run test` - Run all Jest tests (configured to run serially to prevent file conflicts)
+- Single test: `npx jest src/cli.test.ts -t "test name"` - Run specific test by name
 - Update snapshots: `npm run test -- -u` - Update Jest snapshots after changes
-- Format: `npm run prettier` - Format code with Prettier (excludes .snap files)
+- Format: `npm run format` - Format code with ESLint auto-fix
+- Format (legacy): `npm run prettier` - Format code with Prettier (excludes .snap files)
+- Lint: `npm run lint` - Check code with ESLint without fixing
 - Publish: `npm run prepublishOnly` - Automatically runs build before publishing
 
 ## Token Analysis Scripts
@@ -43,9 +45,14 @@ The architecture supports two usage patterns:
 5. **Output Generation**: Combines processed files into a single markdown document
 
 ### Key Components
-- `src/index.ts` - Main entry point containing CLI logic, library exports, and core processing functions
+- `src/index.ts` - Main entry point containing CLI logic and library exports
+- `src/digest.ts` - Core processing functions for file discovery, content processing, and output generation
 - `src/utils.ts` - Utility functions for file processing, token counting, ignore patterns, and file type detection
-- `src/index.test.ts` - Comprehensive test suite covering both CLI and library functionality
+- `src/types.ts` - TypeScript type definitions for the project
+- `src/cli.test.ts` - CLI functionality tests (command-line interface behavior)
+- `src/library.test.ts` - Core library function tests (generateDigest, generateDigestContent, etc.)
+- `src/file-stats.test.ts` - File statistics tests (getFileStats function)
+- `src/minify.test.ts` - Minify functionality tests (.aidigestminify patterns and callbacks)
 - `scripts/` - Analysis and utility scripts for token counting research
 
 ### Critical Functions
@@ -61,6 +68,12 @@ The architecture supports two usage patterns:
 The tool consistently uses processed content size (markdown wrapper + content) for all file size calculations and displays. This ensures consistency between CLI output and library functions.
 
 ### Testing Architecture
+- **Test Organization**: Tests are split into 4 files based on functionality:
+  - `cli.test.ts` - CLI interface and command-line behavior
+  - `library.test.ts` - Core library functions and API
+  - `file-stats.test.ts` - File statistics and size calculation
+  - `minify.test.ts` - Minify patterns and callback functionality
+- **Serial Execution**: Jest is configured with `maxWorkers: 1` to prevent file conflicts during concurrent test execution
 - **CLI Tests**: Use `execAsync` with `ts-node` to test actual CLI behavior
 - **Library Tests**: Direct function imports for unit testing
 - **Temporary Directories**: Each test creates isolated temp directories for file operations
@@ -86,6 +99,32 @@ The multiplier (0.9048) was derived from analysis showing:
 - OpenAI (GPT-4o): 310,641 tokens  
 - Ratio: 0.9048 (OpenAI/Claude)
 
+## Feature: .aidigestminify (v1.5.0)
+Added support for `.aidigestminify` file which works similarly to `.aidigestignore` but instead of excluding files completely, it includes them with a placeholder message. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context.
+
+**How it works:**
+- Create a `.aidigestminify` file with patterns similar to `.gitignore`
+- Files matching these patterns will be included with placeholder content
+- The placeholder shows the file type and indicates the content was excluded
+- Useful for: minified files, compiled code, large data files, database files
+
+**Example patterns:**
+```
+*.min.js
+*.min.css
+dist/*
+build/*
+*.db
+*.sqlite
+```
+
+**Implementation details:**
+- Added `minifyFile` parameter to all core functions
+- Modified `processFiles()` to check minify patterns before processing content
+- Added `minifiedCount` to statistics tracking
+- Watch mode monitors `.aidigestminify` file for changes
+- CLI option `--minify-file` to specify custom minify file name
+
 ## Library Usage
 The tool exports functions for programmatic use:
 - `generateDigest(options)` - Returns content string when `outputFile: null`, writes file otherwise
@@ -93,6 +132,8 @@ The tool exports functions for programmatic use:
 - `generateDigestFiles(options)` - Returns `{ files }` array for custom filtering/processing
 - `getFileStats(options)` - Returns file statistics sorted by size with total token counts, no content
 - `writeDigestToFile(content, outputFile, stats, showOutputFiles, fileSizes)` - File writing utility
+
+All library functions now support the `minifyFile` option for `.aidigestminify` patterns.
 
 ## Code Style & Patterns
 - Use 2 spaces for indentation
@@ -106,3 +147,15 @@ The tool exports functions for programmatic use:
 - Add timeout values to Jest tests for file operations (10000-15000ms)
 - Use snapshot testing for complex data structures that should remain stable
 - Binary files should be tested with actual binary data, not mocked content
+
+## Code Quality & Pre-commit Hooks
+- ESLint is configured for TypeScript with basic formatting rules
+- Pre-commit hook automatically runs ESLint fixes on staged files
+- Use `npm run format` for manual code formatting with ESLint
+- Use `npm run lint` to check for linting issues without auto-fixing
+
+## Test Configuration
+- Jest is configured to run tests serially (`maxWorkers: 1`) to prevent file conflicts during temporary file operations
+- Tests are organized into 4 files by functionality: CLI, Library API, File Stats, and Minify features
+- Each test uses unique temporary directories to avoid conflicts
+- Shared output files (like `codebase.md`) are cleaned up in `afterAll` hooks

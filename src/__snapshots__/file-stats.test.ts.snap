@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AI Digest Library API should return file statistics sorted by size with getFileStats 1`] = `
+exports[`AI Digest File Stats API should return file statistics sorted by size with getFileStats 1`] = `
 {
   "files": [
     {

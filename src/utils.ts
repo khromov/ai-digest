@@ -1,4 +1,4 @@
-import ignore, { Ignore } from "ignore";
+import ignore from "ignore";
 import { isBinaryFile } from "isbinaryfile";
 import { countTokens } from "@anthropic-ai/tokenizer";
 import path from "path";
@@ -22,6 +22,7 @@ export const WHITESPACE_DEPENDENT_EXTENSIONS = [
 
 export const DEFAULT_IGNORES = [
   ".aidigestignore",
+  ".aidigestminify",
   // Node.js
   "node_modules",
   "package-lock.json",
@@ -171,42 +172,42 @@ export async function isTextFile(filePath: string): Promise<boolean> {
 export function getFileType(filePath: string): string {
   const extension = path.extname(filePath).toLowerCase();
   switch (extension) {
-    case ".jpg":
-    case ".jpeg":
-    case ".png":
-    case ".gif":
-    case ".bmp":
-    case ".webp":
-      return "Image";
-    case ".svg":
-      return "SVG Image";
-    case ".wasm":
-      return "WebAssembly";
-    case ".pdf":
-      return "PDF";
-    case ".doc":
-    case ".docx":
-      return "Word Document";
-    case ".xls":
-    case ".xlsx":
-      return "Excel Spreadsheet";
-    case ".ppt":
-    case ".pptx":
-      return "PowerPoint Presentation";
-    case ".zip":
-    case ".rar":
-    case ".7z":
-      return "Compressed Archive";
-    case ".exe":
-      return "Executable";
-    case ".dll":
-      return "Dynamic-link Library";
-    case ".so":
-      return "Shared Object";
-    case ".dylib":
-      return "Dynamic Library";
-    default:
-      return "Binary";
+  case ".jpg":
+  case ".jpeg":
+  case ".png":
+  case ".gif":
+  case ".bmp":
+  case ".webp":
+    return "Image";
+  case ".svg":
+    return "SVG Image";
+  case ".wasm":
+    return "WebAssembly";
+  case ".pdf":
+    return "PDF";
+  case ".doc":
+  case ".docx":
+    return "Word Document";
+  case ".xls":
+  case ".xlsx":
+    return "Excel Spreadsheet";
+  case ".ppt":
+  case ".pptx":
+    return "PowerPoint Presentation";
+  case ".zip":
+  case ".rar":
+  case ".7z":
+    return "Compressed Archive";
+  case ".exe":
+    return "Executable";
+  case ".dll":
+    return "Dynamic-link Library";
+  case ".so":
+    return "Shared Object";
+  case ".dylib":
+    return "Dynamic Library";
+  default:
+    return "Binary";
   }
 }
 
@@ -215,4 +216,44 @@ export function shouldTreatAsBinary(filePath: string): boolean {
     filePath.toLowerCase().endsWith(".svg") ||
     getFileType(filePath) !== "Binary"
   );
+}
+
+// Functions moved from index.ts
+export function getActualWorkingDirectory(): string {
+  // INIT_CWD is set by npm/npx to the directory from which the command was invoked
+  // This is more reliable than process.cwd() when running via npx
+  if (process.env.INIT_CWD) {
+    return process.env.INIT_CWD;
+  }
+
+  return process.cwd();
+}
+
+// Simple debounce function to avoid multiple rebuilds when many files change at once
+export function debounce<F extends (...args: unknown[]) => unknown>(
+  func: F,
+  wait: number,
+): (...args: Parameters<F>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function (...args: Parameters<F>) {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+
+    timeout = setTimeout(() => {
+      func(...args);
+      timeout = null;
+    }, wait);
+  };
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function naturalSort(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 }
