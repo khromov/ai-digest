@@ -172,7 +172,7 @@ import aiDigest, { MinifyFileDescriptionCallback } from 'ai-digest';
 
 const customMinifyDescription: MinifyFileDescriptionCallback = (metadata) => {
   return `# ${metadata.displayPath}\n\n` +
-    `⚠️ Minified ${metadata.extension.toUpperCase()} file\n` +
+    `⚠️ Minified .${metadata.extension.toLowerCase()} file\n` +
     `Size reduced for AI context optimization.\n\n`;
 };
 

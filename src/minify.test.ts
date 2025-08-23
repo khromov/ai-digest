@@ -71,14 +71,14 @@ describe("AI Digest Minify Functionality", () => {
 
       // Minified files should have placeholder content
       expect(content).toContain("# minified.min.js");
-      expect(content).toContain("This is a minified file of type: JS");
+      expect(content).toContain("This is a minified file of type: .js");
       expect(content).toContain(
-        "(File exists but content excluded via .aidigestminify)"
+        "The file exists but has been excluded from the codebase digest"
       );
       expect(content).not.toContain("function min(){console.log(\"minified\")}");
 
       expect(content).toContain("# data.json");
-      expect(content).toContain("This is a minified file of type: JSON");
+      expect(content).toContain("This is a minified file of type: .json");
       expect(content).not.toContain("{\"key\": \"value\"}");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -122,7 +122,7 @@ describe("AI Digest Minify Functionality", () => {
 
       // TXT file should be minified
       expect(content).toContain("# exclude.txt");
-      expect(content).toContain("This is a minified file of type: TXT");
+      expect(content).toContain("This is a minified file of type: .txt");
       expect(content).not.toContain("Should be minified");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -185,9 +185,9 @@ describe("AI Digest Minify Functionality", () => {
 
       // Minified file should have placeholder
       expect(content).toContain("# minified.min.js");
-      expect(content).toContain("This is a minified file of type: JS");
+      expect(content).toContain("This is a minified file of type: .js");
       expect(content).toContain(
-        "(File exists but content excluded via .aidigestminify)"
+        "The file exists but has been excluded from the codebase digest"
       );
       expect(content).not.toContain("function min(){console.log(\"min\")}");
     });
@@ -208,7 +208,7 @@ describe("AI Digest Minify Functionality", () => {
       const jsonFile = result.files.find((f) => f.fileName === "data.json");
       expect(jsonFile).toBeDefined();
       expect(jsonFile!.content).toContain(
-        "This is a minified file of type: JSON"
+        "This is a minified file of type: .json"
       );
       expect(jsonFile!.content).not.toContain("{\"key\": \"value\"}");
     });
@@ -284,7 +284,7 @@ describe("AI Digest Minify Functionality", () => {
 
       // CSV file should be minified
       expect(content).toContain("# data.csv");
-      expect(content).toContain("This is a minified file of type: CSV");
+      expect(content).toContain("This is a minified file of type: .csv");
       expect(content).not.toContain("id,name");
     });
 
@@ -304,7 +304,7 @@ describe("AI Digest Minify Functionality", () => {
       const customCallback: MinifyFileDescriptionCallback = (metadata) => {
         return (
           `# ${metadata.displayPath}\n\n` +
-          `Custom minified content for ${metadata.extension.toUpperCase()} file\n` +
+          `Custom minified content for .${metadata.extension.toLowerCase()} file\n` +
           `File type: ${metadata.fileType}\n` +
           "This file was minified and excluded.\n\n"
         );
@@ -319,13 +319,13 @@ describe("AI Digest Minify Functionality", () => {
       });
 
       // Check that custom callback was used
-      expect(content).toContain("Custom minified content for JS file");
-      expect(content).toContain("Custom minified content for CSS file");
+      expect(content).toContain("Custom minified content for .js file");
+      expect(content).toContain("Custom minified content for .css file");
       expect(content).toContain("This file was minified and excluded");
 
       // Original default text should not be present
       expect(content).not.toContain(
-        "(File exists but content excluded via .aidigestminify)"
+        "The file exists but has been excluded from the codebase digest"
       );
     });
 
@@ -368,7 +368,7 @@ describe("AI Digest Minify Functionality", () => {
       expect(capturedMetadata!.fileType).toBeDefined();
       expect(capturedMetadata!.filePath).toContain("bundle.min.js");
       expect(capturedMetadata!.defaultText).toContain(
-        "This is a minified file of type: JS"
+        "This is a minified file of type: .js"
       );
     });
 
@@ -483,7 +483,7 @@ describe("AI Digest Minify Functionality", () => {
 
       // Should contain both default text and additional note
       expect(content).toContain(
-        "(File exists but content excluded via .aidigestminify)"
+        "The file exists but has been excluded from the codebase digest"
       );
       expect(content).toContain("Additional note: This file was processed");
     });
