@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 - Build: `npm run build` - Compiles TypeScript code to dist/
 - Start: `npm run start` - Run the application with ts-node for development
-- Test: `npm run test` - Run all Jest tests
-- Single test: `npx jest src/index.test.ts -t "test name"` - Run specific test by name
+- Test: `npm run test` - Run all Jest tests (configured to run serially to prevent file conflicts)
+- Single test: `npx jest src/cli.test.ts -t "test name"` - Run specific test by name
 - Update snapshots: `npm run test -- -u` - Update Jest snapshots after changes
 - Format: `npm run format` - Format code with ESLint auto-fix
 - Format (legacy): `npm run prettier` - Format code with Prettier (excludes .snap files)
@@ -49,7 +49,10 @@ The architecture supports two usage patterns:
 - `src/digest.ts` - Core processing functions for file discovery, content processing, and output generation
 - `src/utils.ts` - Utility functions for file processing, token counting, ignore patterns, and file type detection
 - `src/types.ts` - TypeScript type definitions for the project
-- `src/index.test.ts` - Comprehensive test suite covering both CLI and library functionality
+- `src/cli.test.ts` - CLI functionality tests (command-line interface behavior)
+- `src/library.test.ts` - Core library function tests (generateDigest, generateDigestContent, etc.)
+- `src/file-stats.test.ts` - File statistics tests (getFileStats function)
+- `src/minify.test.ts` - Minify functionality tests (.aidigestminify patterns and callbacks)
 - `scripts/` - Analysis and utility scripts for token counting research
 
 ### Critical Functions
@@ -65,6 +68,12 @@ The architecture supports two usage patterns:
 The tool consistently uses processed content size (markdown wrapper + content) for all file size calculations and displays. This ensures consistency between CLI output and library functions.
 
 ### Testing Architecture
+- **Test Organization**: Tests are split into 4 files based on functionality:
+  - `cli.test.ts` - CLI interface and command-line behavior
+  - `library.test.ts` - Core library functions and API
+  - `file-stats.test.ts` - File statistics and size calculation
+  - `minify.test.ts` - Minify patterns and callback functionality
+- **Serial Execution**: Jest is configured with `maxWorkers: 1` to prevent file conflicts during concurrent test execution
 - **CLI Tests**: Use `execAsync` with `ts-node` to test actual CLI behavior
 - **Library Tests**: Direct function imports for unit testing
 - **Temporary Directories**: Each test creates isolated temp directories for file operations
@@ -144,3 +153,9 @@ All library functions now support the `minifyFile` option for `.aidigestminify` 
 - Pre-commit hook automatically runs ESLint fixes on staged files
 - Use `npm run format` for manual code formatting with ESLint
 - Use `npm run lint` to check for linting issues without auto-fixing
+
+## Test Configuration
+- Jest is configured to run tests serially (`maxWorkers: 1`) to prevent file conflicts during temporary file operations
+- Tests are organized into 4 files by functionality: CLI, Library API, File Stats, and Minify features
+- Each test uses unique temporary directories to avoid conflicts
+- Shared output files (like `codebase.md`) are cleaned up in `afterAll` hooks
