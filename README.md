@@ -112,50 +112,50 @@ npm install ai-digest
 #### Basic Usage
 
 ```javascript
-import aiDigest from 'ai-digest';
+import aiDigest from "ai-digest";
 
 // Generate digest content as a string
 const content = await aiDigest.generateDigest({
-  inputDir: './src',
-  outputFile: null,  // Return as string instead of writing to file
-  silent: true       // Suppress console output
+  inputDir: "./src",
+  outputFile: null, // Return as string instead of writing to file
+  silent: true, // Suppress console output
 });
 
 // Or save directly to a file
 await aiDigest.generateDigest({
-  inputDir: './src',
-  outputFile: 'codebase.md',
+  inputDir: "./src",
+  outputFile: "codebase.md",
   removeWhitespaceFlag: true,
-  showOutputFiles: 'sort'
+  showOutputFiles: "sort",
 });
 ```
 
 #### Using Minify Patterns
 
 ```javascript
-import aiDigest from 'ai-digest';
+import aiDigest from "ai-digest";
 
 // Use minify patterns to exclude content from specific files
 const content = await aiDigest.generateDigest({
-  inputDir: './src',
+  inputDir: "./src",
   outputFile: null,
-  minifyFile: '.aidigestminify',  // Default value
-  silent: true
+  minifyFile: ".aidigestminify", // Default value
+  silent: true,
 });
 
 // Or use a custom minify file location
 const content = await aiDigest.generateDigest({
-  inputDir: './src',
+  inputDir: "./src",
   outputFile: null,
-  minifyFile: 'config/.myminifypatterns',
-  silent: true
+  minifyFile: "config/.myminifypatterns",
+  silent: true,
 });
 
 // Get detailed content with statistics including minified file count
 const { content, files, stats } = await aiDigest.generateDigestContent({
-  inputDir: './src',
-  minifyFile: '.aidigestminify',
-  silent: true
+  inputDir: "./src",
+  minifyFile: ".aidigestminify",
+  silent: true,
 });
 
 console.log(`Total files: ${stats.totalFiles}`);
@@ -186,6 +186,7 @@ const content = await aiDigest.generateDigest({
 ```
 
 The callback receives metadata about each minified file:
+
 - `filePath`: full path to the file
 - `displayPath`: relative path shown in output
 - `extension`: file extension (e.g., 'js', 'css')
@@ -195,38 +196,42 @@ The callback receives metadata about each minified file:
 #### Working with Individual Files
 
 ```javascript
-import aiDigest from 'ai-digest';
+import aiDigest from "ai-digest";
 
 // Get individual file objects for custom filtering
 const { files } = await aiDigest.generateDigestFiles({
-  inputDir: './src',
-  minifyFile: '.aidigestminify',  // Respects minify patterns
-  silent: true
+  inputDir: "./src",
+  minifyFile: ".aidigestminify", // Respects minify patterns
+  silent: true,
 });
 
 // Each file has: { fileName: string, content: string }
 // Minified files will have placeholder content
-files.forEach(file => {
-  if (file.content.includes('(File exists but content excluded via .aidigestminify)')) {
+files.forEach((file) => {
+  if (
+    file.content.includes(
+      "(File exists but content excluded via .aidigestminify)"
+    )
+  ) {
     console.log(`${file.fileName} was minified`);
   }
 });
 
 // Apply custom filtering after processing
-const jsFiles = files.filter(file => file.fileName.endsWith('.js'));
-const customDigest = jsFiles.map(file => file.content).join('');
+const jsFiles = files.filter((file) => file.fileName.endsWith(".js"));
+const customDigest = jsFiles.map((file) => file.content).join("");
 ```
 
 #### File Statistics
 
 ```javascript
-import aiDigest from 'ai-digest';
+import aiDigest from "ai-digest";
 
 // Get file statistics without content (useful for analysis)
 const stats = await aiDigest.getFileStats({
-  inputDir: './src',
-  minifyFile: '.aidigestminify',  // Minified files show reduced size
-  silent: true
+  inputDir: "./src",
+  minifyFile: ".aidigestminify", // Minified files show reduced size
+  silent: true,
 });
 
 // Returns files sorted by size (largest first) with total token counts
@@ -245,27 +250,31 @@ console.log(stats);
 #### Advanced Options
 
 ```javascript
-import aiDigest from 'ai-digest';
+import aiDigest from "ai-digest";
 
 // All available options for library functions
 const options = {
-  inputDir: './src',                    // Single input directory
-  inputDirs: ['./src', './lib'],        // Multiple input directories (alternative to inputDir)
-  outputFile: 'output.md',               // Output file path (null for string return)
-  useDefaultIgnores: true,               // Use default ignore patterns
-  removeWhitespaceFlag: false,           // Remove unnecessary whitespace
-  ignoreFile: '.aidigestignore',         // Custom ignore file name
-  minifyFile: '.aidigestminify',         // Custom minify file name
-  minifyFileDescription: callback,       // Custom minify description callback (optional)
-  showOutputFiles: false,                // Show file list (false, true, or 'sort')
-  silent: true,                          // Suppress console output
-  additionalDefaultIgnores: ['*.test.js'] // Additional patterns to ignore
+  inputDir: "./src", // Single input directory
+  inputDirs: ["./src", "./lib"], // Multiple input directories (alternative to inputDir)
+  outputFile: "output.md", // Output file path (null for string return)
+  useDefaultIgnores: true, // Use default ignore patterns
+  removeWhitespaceFlag: false, // Remove unnecessary whitespace
+  ignoreFile: ".aidigestignore", // Custom ignore file name
+  minifyFile: ".aidigestminify", // Custom minify file name
+  minifyFileDescription: callback, // Custom minify description callback (optional)
+  showOutputFiles: false, // Show file list (false, true, or 'sort')
+  silent: true, // Suppress console output
+  additionalDefaultIgnores: ["*.test.js"], // Additional patterns to ignore
 };
 
 // Use with any function
 const content = await aiDigest.generateDigest(options);
 const { files } = await aiDigest.generateDigestFiles(options);
-const { content: fullContent, files: allFiles, stats } = await aiDigest.generateDigestContent(options);
+const {
+  content: fullContent,
+  files: allFiles,
+  stats,
+} = await aiDigest.generateDigestContent(options);
 const fileStats = await aiDigest.getFileStats(options);
 ```
 
@@ -336,9 +345,10 @@ Use the `--show-output-files` flag to see which files are being included, making
 
 ## Custom Minify Patterns
 
-ai-digest supports custom minify patterns using a `.aidigestminify` file in the root directory of your project. This file works similarly to `.aidigestignore`, but instead of excluding files completely, it includes them with a placeholder message indicating the file exists but its content is not included in the codebase dump. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context.
+ai-digest supports custom minify patterns using a `.aidigestminify` file in the root directory of your project. This file works similarly to `.aidigestignore`, but instead of excluding files completely, it includes them with a placeholder message indicating the file exists but its content is not included in the codebase dump. This is useful for large generated files, compiled assets, or files that don't need their full content in the AI context. It can also be used for saving on tokens when you want the AI to know the files exist but not necessarily load their content into the context.
 
 Example `.aidigestminify` file:
+
 ```
 # Minified JavaScript files
 *.min.js
@@ -358,6 +368,7 @@ build/*
 ```
 
 When a file matches a minify pattern, it will appear in the output like this:
+
 ```
 # dist/bundle.min.js
 
