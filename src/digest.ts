@@ -288,9 +288,12 @@ export async function processFiles(options: {
           const extension = path.extname(relativePath).slice(1) || "unknown";
           
           // Create default text
-          let defaultText = `# ${displayPath}\n\n`;
-          defaultText += `This is a minified file of type: ${extension.toUpperCase()}\n`;
-          defaultText += "(File exists but content excluded via .aidigestminify)\n\n";
+          let defaultText = `# ${displayPath}
+
+This is a minified file of type: ${extension.toUpperCase()}
+(File exists but content excluded via .aidigestminify)
+
+`;
           
           // Use callback if provided, otherwise use default
           if (minifyFileDescription) {
