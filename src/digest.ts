@@ -290,7 +290,7 @@ export async function processFiles(options: {
           // Create default text
           const defaultText = `# ${displayPath}
 
-This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "unknown"}. The file exists but has been excluded from the codebase digest.
+This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "unknown"}. The file exists but has been excluded from the codebase digest.\n
 `;
 
           // Use callback if provided, otherwise use default
