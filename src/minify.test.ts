@@ -135,7 +135,9 @@ describe("AI Digest Minify Functionality", () => {
 
     beforeEach(async () => {
       // Create a temporary directory for each test
-      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-digest-minify-lib-test-"));
+      tempDir = await fs.mkdtemp(
+        path.join(os.tmpdir(), "ai-digest-minify-lib-test-")
+      );
 
       // Create some test files
       await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
@@ -217,7 +219,10 @@ describe("AI Digest Minify Functionality", () => {
       // Create test files
       await fs.writeFile(path.join(tempDir, "regular.txt"), "Regular content");
       await fs.writeFile(path.join(tempDir, "minified1.min.js"), "minified JS");
-      await fs.writeFile(path.join(tempDir, "minified2.min.css"), "minified CSS");
+      await fs.writeFile(
+        path.join(tempDir, "minified2.min.css"),
+        "minified CSS"
+      );
 
       // Create .aidigestminify file
       await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.*");
@@ -295,7 +300,10 @@ describe("AI Digest Minify Functionality", () => {
         path.join(tempDir, "app.min.js"),
         "function app(){console.log(\"app\")}"
       );
-      await fs.writeFile(path.join(tempDir, "styles.min.css"), ".btn{color:red}");
+      await fs.writeFile(
+        path.join(tempDir, "styles.min.css"),
+        ".btn{color:red}"
+      );
 
       // Create .aidigestminify file
       await fs.writeFile(path.join(tempDir, ".aidigestminify"), "*.min.*");

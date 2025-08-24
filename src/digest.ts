@@ -113,6 +113,7 @@ export async function processFiles(options: {
     customIgnoredCount: number;
     minifiedCount: number;
     binaryAndSvgFileCount: number;
+    skippedFiles: number;
     includedFiles: string[];
     fileSizeInBytes: number;
   };
@@ -291,7 +292,7 @@ export async function processFiles(options: {
           // Create default text
           const defaultText = `# ${displayPath}
 
-This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "unknown"}. The file exists but has been excluded from the codebase digest.\n
+This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "unknown"} - The file exists but has been excluded from the codebase digest.\n
 `;
 
           // Use callback if provided, otherwise use default
@@ -317,21 +318,24 @@ This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "
           // Check file size before reading
           const stats = await fs.stat(fullPath);
           const fileSizeMB = stats.size / (1024 * 1024);
-          
+
           // Skip files larger than 500MB to avoid string length issues
           if (stats.size > 500 * 1024 * 1024) {
-            console.warn(`⚠️  Skipping large file: ${displayPath} (${fileSizeMB.toFixed(2)} MB)`);
+            console.warn(
+              `⚠️  Skipping large file: ${displayPath} (${fileSizeMB.toFixed(2)} MB)`
+            );
             fileContent = `# ${displayPath}\n\nThis file was skipped because it is too large (${fileSizeMB.toFixed(2)} MB) to process safely.\n\n`;
             skippedFiles++;
             continue;
           }
-          
+
           let content;
           try {
             content = await fs.readFile(fullPath, "utf-8");
           } catch (error) {
             console.error(`❌ Error reading file ${displayPath}:`, error);
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
             fileContent = `# ${displayPath}\n\nError reading this file: ${errorMessage}\n\n`;
             skippedFiles++;
             continue;
@@ -429,6 +433,7 @@ export async function generateDigestContent(options: {
     customIgnoredCount: number;
     minifiedCount: number;
     binaryAndSvgFileCount: number;
+    skippedFiles: number;
     includedFiles: string[];
     estimatedTokens: number;
     fileSizeInBytes: number;
@@ -482,6 +487,7 @@ export async function writeDigestToFile(
     customIgnoredCount: number;
     minifiedCount?: number;
     binaryAndSvgFileCount: number;
+    skippedFiles?: number;
     includedFiles: string[];
     estimatedTokens: number;
     fileSizeInBytes: number;
