@@ -242,6 +242,7 @@ export async function processFiles(options: {
     let customIgnoredCount = 0;
     let minifiedCount = 0;
     let binaryAndSvgFileCount = 0;
+    let skippedFiles = 0;
     const includedFiles: string[] = [];
     const fileSizes: Record<string, number> = {};
     const processedFiles: ProcessedFile[] = [];
@@ -313,7 +314,28 @@ This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "
           (await isTextFile(fullPath)) &&
           !shouldTreatAsBinary(fullPath)
         ) {
-          let content = await fs.readFile(fullPath, "utf-8");
+          // Check file size before reading
+          const stats = await fs.stat(fullPath);
+          const fileSizeMB = stats.size / (1024 * 1024);
+          
+          // Skip files larger than 500MB to avoid string length issues
+          if (stats.size > 500 * 1024 * 1024) {
+            console.warn(`⚠️  Skipping large file: ${displayPath} (${fileSizeMB.toFixed(2)} MB)`);
+            fileContent = `# ${displayPath}\n\nThis file was skipped because it is too large (${fileSizeMB.toFixed(2)} MB) to process safely.\n\n`;
+            skippedFiles++;
+            continue;
+          }
+          
+          let content;
+          try {
+            content = await fs.readFile(fullPath, "utf-8");
+          } catch (error) {
+            console.error(`❌ Error reading file ${displayPath}:`, error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            fileContent = `# ${displayPath}\n\nError reading this file: ${errorMessage}\n\n`;
+            skippedFiles++;
+            continue;
+          }
           const extension = path.extname(relativePath);
 
           if (content.includes("\u0000")) {
@@ -372,6 +394,7 @@ This is a minified file of type: ${extension ? "." + extension.toLowerCase() : "
         customIgnoredCount,
         minifiedCount,
         binaryAndSvgFileCount,
+        skippedFiles,
         includedFiles,
         fileSizeInBytes: totalContentSize,
       },
