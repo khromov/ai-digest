@@ -52,6 +52,7 @@ export const DEFAULT_IGNORES = [
   "venv",
   "ENV",
   "env",
+  "uv.lock",
   // Godot
   ".godot",
   "*.import",
