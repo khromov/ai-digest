@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "ai-digest": "./dist/index.js"
+    "ai-digest": "dist/index.js"
   },
   "engines": {
     "node": ">=20.0.0"
