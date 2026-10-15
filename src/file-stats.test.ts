@@ -16,7 +16,7 @@ describe("AI Digest File Stats API", () => {
     await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
     await fs.writeFile(
       path.join(tempDir, "file2.js"),
-      "console.log(\"Test content 2\");"
+      "console.log(\"Test content 2\");",
     );
 
     // Create a subdirectory with a file
@@ -24,7 +24,7 @@ describe("AI Digest File Stats API", () => {
     await fs.mkdir(subDir);
     await fs.writeFile(
       path.join(subDir, "file3.py"),
-      "print(\"Test content 3\")"
+      "print(\"Test content 3\")",
     );
   });
 
@@ -38,13 +38,13 @@ describe("AI Digest File Stats API", () => {
     await fs.writeFile(path.join(tempDir, "small.txt"), "tiny");
     await fs.writeFile(
       path.join(tempDir, "medium.js"),
-      "console.log('medium sized file');"
+      "console.log('medium sized file');",
     );
     await fs.writeFile(
       path.join(tempDir, "large.md"),
       "# Large file\n\nThis is a much larger file with more content to ensure different sizes.\n".repeat(
-        10
-      )
+        10,
+      ),
     );
 
     const result = await getFileStats({
@@ -59,7 +59,7 @@ describe("AI Digest File Stats API", () => {
     // Check that files are sorted by size (largest first)
     for (let i = 1; i < result.files.length; i++) {
       expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
-        result.files[i].sizeInBytes
+        result.files[i].sizeInBytes,
       );
     }
 
@@ -108,7 +108,7 @@ describe("AI Digest File Stats API", () => {
 
     // Verify the file appears in the correct position based on size sorting
     const mascotFileIndex = result.files.findIndex((f) =>
-      f.path.includes("mascot.jpg")
+      f.path.includes("mascot.jpg"),
     );
     expect(mascotFileIndex).toBeGreaterThanOrEqual(0);
 
@@ -116,7 +116,7 @@ describe("AI Digest File Stats API", () => {
     if (result.files.length > 1) {
       for (let i = 1; i < result.files.length; i++) {
         expect(result.files[i - 1].sizeInBytes).toBeGreaterThanOrEqual(
-          result.files[i].sizeInBytes
+          result.files[i].sizeInBytes,
         );
       }
     }
@@ -127,7 +127,7 @@ describe("AI Digest File Stats API", () => {
     await fs.writeFile(path.join(tempDir, "app.ts"), "const app = 'main';");
     await fs.writeFile(
       path.join(tempDir, "app.spec.ts"),
-      "describe('app', () => {});"
+      "describe('app', () => {});",
     );
     await fs.writeFile(path.join(tempDir, "temp.log"), "log entries");
     await fs.writeFile(path.join(tempDir, ".env"), "SECRET=value");
@@ -142,7 +142,7 @@ describe("AI Digest File Stats API", () => {
     });
 
     const statsHasSpec = statsResult.files.some((f) =>
-      f.path.endsWith(".spec.ts")
+      f.path.endsWith(".spec.ts"),
     );
     const statsHasLog = statsResult.files.some((f) => f.path.endsWith(".log"));
 

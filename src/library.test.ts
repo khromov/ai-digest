@@ -23,7 +23,7 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "file1.txt"), "Test content 1");
     await fs.writeFile(
       path.join(tempDir, "file2.js"),
-      "console.log(\"Test content 2\");"
+      "console.log(\"Test content 2\");",
     );
 
     // Create a subdirectory with a file
@@ -31,7 +31,7 @@ describe("AI Digest Library API", () => {
     await fs.mkdir(subDir);
     await fs.writeFile(
       path.join(subDir, "file3.py"),
-      "print(\"Test content 3\")"
+      "print(\"Test content 3\")",
     );
   });
 
@@ -110,7 +110,7 @@ describe("AI Digest Library API", () => {
     // Create a file with whitespace
     await fs.writeFile(
       path.join(tempDir, "whitespace.js"),
-      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}"
+      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}",
     );
 
     // With whitespace removal
@@ -131,11 +131,11 @@ describe("AI Digest Library API", () => {
 
     // With whitespace removal, the string should be more compact
     expect(contentWithRemoval).toContain(
-      "function test() { console.log(\"multiple spaces\"); }"
+      "function test() { console.log(\"multiple spaces\"); }",
     );
     // Without whitespace removal, the original spacing should be preserved
     expect(contentWithoutRemoval).toContain(
-      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}"
+      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}",
     );
   });
 
@@ -181,7 +181,7 @@ describe("AI Digest Library API", () => {
 
     // Verify console output was generated
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Files aggregated successfully")
+      expect.stringContaining("Files aggregated successfully"),
     );
 
     // Clean up
@@ -268,7 +268,7 @@ describe("AI Digest Library API", () => {
     // Create a file with whitespace
     await fs.writeFile(
       path.join(tempDir, "whitespace.js"),
-      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}"
+      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}",
     );
 
     // With whitespace removal
@@ -286,24 +286,24 @@ describe("AI Digest Library API", () => {
     });
 
     const whitespaceFileWithRemoval = resultWithRemoval.files.find(
-      (f) => f.fileName === "whitespace.js"
+      (f) => f.fileName === "whitespace.js",
     );
     const whitespaceFileWithoutRemoval = resultWithoutRemoval.files.find(
-      (f) => f.fileName === "whitespace.js"
+      (f) => f.fileName === "whitespace.js",
     );
 
     expect(whitespaceFileWithRemoval!.content).toContain(
-      "function test() { console.log(\"multiple spaces\"); }"
+      "function test() { console.log(\"multiple spaces\"); }",
     );
     expect(whitespaceFileWithoutRemoval!.content).toContain(
-      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}"
+      "function test() {\n    console.log(\"multiple    spaces\");\n\n\n}",
     );
   });
 
   it("should work with multiple input directories in generateDigestFiles", async () => {
     // Create another temp directory
     const tempDir2 = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ai-digest-test2-")
+      path.join(os.tmpdir(), "ai-digest-test2-"),
     );
 
     try {
@@ -361,7 +361,7 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "main.ts"), "const main = () => {};");
     await fs.writeFile(
       path.join(tempDir, "main.test.ts"),
-      "test('main', () => {});"
+      "test('main', () => {});",
     );
     await fs.writeFile(path.join(tempDir, "config.json"), "{\"key\": \"value\"}");
 
@@ -380,10 +380,10 @@ describe("AI Digest Library API", () => {
 
     // Verify the test file and config file are excluded
     const hasTestFile = withIgnores.files.some((f) =>
-      f.fileName.endsWith(".test.ts")
+      f.fileName.endsWith(".test.ts"),
     );
     const hasJsonFile = withIgnores.files.some((f) =>
-      f.fileName.endsWith(".json")
+      f.fileName.endsWith(".json"),
     );
     const hasMainFile = withIgnores.files.some((f) => f.fileName === "main.ts");
 
@@ -400,7 +400,7 @@ describe("AI Digest Library API", () => {
     await fs.writeFile(path.join(tempDir, "app.ts"), "const app = 'main';");
     await fs.writeFile(
       path.join(tempDir, "app.spec.ts"),
-      "describe('app', () => {});"
+      "describe('app', () => {});",
     );
     await fs.writeFile(path.join(tempDir, "temp.log"), "log entries");
     await fs.writeFile(path.join(tempDir, ".env"), "SECRET=value");
@@ -423,18 +423,18 @@ describe("AI Digest Library API", () => {
 
     // Verify all functions exclude the same files
     const filesHasSpec = filesResult.files.some((f) =>
-      f.fileName.endsWith(".spec.ts")
+      f.fileName.endsWith(".spec.ts"),
     );
     const filesHasLog = filesResult.files.some((f) =>
-      f.fileName.endsWith(".log")
+      f.fileName.endsWith(".log"),
     );
     const filesHasEnv = filesResult.files.some((f) => f.fileName === ".env");
 
     const contentHasSpec = contentResult.files.some((f) =>
-      f.fileName.endsWith(".spec.ts")
+      f.fileName.endsWith(".spec.ts"),
     );
     const contentHasLog = contentResult.files.some((f) =>
-      f.fileName.endsWith(".log")
+      f.fileName.endsWith(".log"),
     );
 
     // Spec and log files should be excluded by additionalDefaultIgnores
@@ -460,15 +460,25 @@ describe("Claude tokenizer", () => {
   it("should match the original @anthropic-ai/tokenizer counts", () => {
     expect(countTokens("")).toBe(0);
     expect(countTokens("Hello, world! This is a simple sentence.")).toBe(10);
-    expect(countTokens("Ünïcödé — “quotes” 日本語のテキスト 한국어 текст 🚀🔥👩‍💻")).toBe(37);
+    expect(
+      countTokens("Ünïcödé — “quotes” 日本語のテキスト 한국어 текст 🚀🔥👩‍💻"),
+    ).toBe(37);
     expect(countTokens("ﬁ ﬂ ① Ⅻ ｆｕｌｌｗｉｄｔｈ ㎏ ½")).toBe(11);
-    expect(countTokens("before <EOT> middle <META> after <|endoftext|>")).toBe(14);
+    expect(countTokens("before <EOT> middle <META> after <|endoftext|>")).toBe(
+      14,
+    );
   });
 
   it("should return consistent results when the encoder is reused", () => {
-    const text = "export function add(a: number, b: number): number {\n  return a + b;\n}\n".repeat(20);
+    const text =
+      "export function add(a: number, b: number): number {\n  return a + b;\n}\n".repeat(
+        20,
+      );
     expect(countTokens(text)).toBe(460);
     expect(countTokens(text)).toBe(460);
-    expect(estimateTokenCount(text)).toEqual({ claudeTokens: 460, gptTokens: Math.round(460 * 0.9048) });
+    expect(estimateTokenCount(text)).toEqual({
+      claudeTokens: 460,
+      gptTokens: Math.round(460 * 0.9048),
+    });
   });
 });

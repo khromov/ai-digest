@@ -144,11 +144,13 @@ export function estimateTokenCount(text: string): {
 } {
   try {
     const claudeTokens = countTokens(text);
-    const estimatedGptTokens = Math.round(claudeTokens * CLAUDE_TO_OPENAI_MULTIPLIER);
+    const estimatedGptTokens = Math.round(
+      claudeTokens * CLAUDE_TO_OPENAI_MULTIPLIER,
+    );
 
-    return { 
-      gptTokens: estimatedGptTokens, 
-      claudeTokens 
+    return {
+      gptTokens: estimatedGptTokens,
+      claudeTokens,
     };
   } catch (error) {
     console.error("Error estimating token count:", error);
