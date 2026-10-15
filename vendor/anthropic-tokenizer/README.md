@@ -2,7 +2,9 @@
 
 `claude.json` is copied unmodified from the npm package
 [`@anthropic-ai/tokenizer@0.0.4`](https://www.npmjs.com/package/@anthropic-ai/tokenizer)
-(source: https://github.com/anthropics/anthropic-tokenizer-typescript, tag/commit `v0.0.4` / `bd241051`).
+(source: https://github.com/anthropics/anthropic-tokenizer-typescript, commit
+`bd241051066ea37120f2898419e3fc8662fab280`, the "v0.0.4" release commit; the
+repository has no git tags).
 
 It is vendored so that ai-digest no longer depends on that package, which pulls in
 `@types/node@^18` as a runtime dependency. It is loaded by `src/tokenizer.ts`.
