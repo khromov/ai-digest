@@ -9,6 +9,8 @@ import aiDigest, {
   generateDigestContent,
   writeDigestToFile,
 } from "./index";
+import { countTokens } from "./tokenizer";
+import { estimateTokenCount } from "./utils";
 
 describe("AI Digest Library API", () => {
   let tempDir: string;
@@ -450,5 +452,23 @@ describe("AI Digest Library API", () => {
     // Verify app.ts is included in all results
     expect(filesResult.files.some((f) => f.fileName === "app.ts")).toBe(true);
     expect(contentResult.files.some((f) => f.fileName === "app.ts")).toBe(true);
+  });
+});
+
+describe("Claude tokenizer", () => {
+  // Expected counts were produced by @anthropic-ai/tokenizer@0.0.4, which this module replaces
+  it("should match the original @anthropic-ai/tokenizer counts", () => {
+    expect(countTokens("")).toBe(0);
+    expect(countTokens("Hello, world! This is a simple sentence.")).toBe(10);
+    expect(countTokens("Ünïcödé — “quotes” 日本語のテキスト 한국어 текст 🚀🔥👩‍💻")).toBe(37);
+    expect(countTokens("ﬁ ﬂ ① Ⅻ ｆｕｌｌｗｉｄｔｈ ㎏ ½")).toBe(11);
+    expect(countTokens("before <EOT> middle <META> after <|endoftext|>")).toBe(14);
+  });
+
+  it("should return consistent results when the encoder is reused", () => {
+    const text = "export function add(a: number, b: number): number {\n  return a + b;\n}\n".repeat(20);
+    expect(countTokens(text)).toBe(460);
+    expect(countTokens(text)).toBe(460);
+    expect(estimateTokenCount(text)).toEqual({ claudeTokens: 460, gptTokens: Math.round(460 * 0.9048) });
   });
 });
