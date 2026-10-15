@@ -6,7 +6,7 @@
  */
 
 import { encoding_for_model } from "tiktoken";
-import { countTokens } from "@anthropic-ai/tokenizer";
+import { countTokens } from "../src/tokenizer";
 import { promises as fs } from "fs";
 import path from "path";
 

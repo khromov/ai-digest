@@ -48,9 +48,8 @@
     "typescript-eslint": "^8.40.0"
   },
   "dependencies": {
-    "@anthropic-ai/tokenizer": "^0.0.4",
     "chokidar": "^4.0.3",
-    "commander": "^13.1.0",
+    "commander": "^14.0.3",
     "glob": "^11.0.2",
     "ignore": "^7.0.4",
     "isbinaryfile": "^5.0.4",

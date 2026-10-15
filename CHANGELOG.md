@@ -1,3 +1,10 @@
+### Unreleased
+
+- Remove `@anthropic-ai/tokenizer` dependency, which pulled in `@types/node@18` and `undici-types` as runtime dependencies
+- Vendor the unmodified Claude vocabulary from `@anthropic-ai/tokenizer@0.0.4` in `vendor/anthropic-tokenizer/` and tokenize it directly with `tiktoken` (identical token counts)
+- Create the Claude encoder once and reuse it, making token counting much faster for many small files
+- Update `commander` from 13 to 14
+
 ### 1.5.0
 
 - Added `.aidigestminify` file support for including files with placeholder content instead of full content

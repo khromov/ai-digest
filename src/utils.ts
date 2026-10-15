@@ -1,6 +1,6 @@
 import ignore from "ignore";
 import { isBinaryFile } from "isbinaryfile";
-import { countTokens } from "@anthropic-ai/tokenizer";
+import { countTokens } from "./tokenizer";
 import path from "path";
 
 // Multiplier to convert token counts from Claude's tokenizer to OpenAI's tokenizer.

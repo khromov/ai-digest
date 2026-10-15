@@ -49,6 +49,7 @@ The architecture supports two usage patterns:
 - `src/digest.ts` - Core processing functions for file discovery, content processing, and output generation
 - `src/utils.ts` - Utility functions for file processing, token counting, ignore patterns, and file type detection
 - `src/types.ts` - TypeScript type definitions for the project
+- `src/tokenizer.ts` - Claude token counting using the vendored vocabulary in `vendor/anthropic-tokenizer/`
 - `src/cli.test.ts` - CLI functionality tests (command-line interface behavior)
 - `src/library.test.ts` - Core library function tests (generateDigest, generateDigestContent, etc.)
 - `src/file-stats.test.ts` - File statistics tests (getFileStats function)
@@ -83,7 +84,7 @@ The tool consistently uses processed content size (markdown wrapper + content) f
 ### Token Counting Optimization
 **Performance Enhancement (v1.3.1)**: The tool now uses only Claude tokenization with a pre-calculated multiplier for OpenAI estimation:
 
-- **Primary Tokenization**: Uses `@anthropic-ai/tokenizer` for Claude models
+- **Primary Tokenization**: Uses `src/tokenizer.ts` for Claude models: `tiktoken/lite` with the Claude vocabulary vendored unmodified from `@anthropic-ai/tokenizer@0.0.4` in `vendor/anthropic-tokenizer/` (loaded at runtime relative to `__dirname`, so it works from both `src/` and `dist/`). The encoder is created lazily once and reused.
 - **OpenAI Estimation**: Applies multiplier (0.9048) to estimate GPT tokens from Claude tokens
 - **Performance**: ~35% faster than dual tokenization (Claude tokenization is faster than OpenAI WASM)
 - **Accuracy**: 90-95% accurate for most English text, based on Moby Dick analysis
